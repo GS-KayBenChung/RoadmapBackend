@@ -2,8 +2,8 @@ namespace Domain
 {
     public class Section
     {
-        public int SectionId { get; set; }
-        public int MilestoneId { get; set; }
+        public Guid SectionId { get; set; }
+        public Guid MilestoneId { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public bool IsCompleted { get; set; }

@@ -24,11 +24,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.AuditLog", b =>
                 {
-                    b.Property<int>("LogId")
+                    b.Property<Guid>("LogId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("LogId"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ActivityAction")
                         .HasColumnType("text");
@@ -36,8 +34,8 @@ namespace Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("LogId");
 
@@ -48,11 +46,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Milestone", b =>
                 {
-                    b.Property<int>("MilestoneId")
+                    b.Property<Guid>("MilestoneId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MilestoneId"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -72,8 +68,8 @@ namespace Persistence.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.Property<int>("RoadmapId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("RoadmapId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -87,17 +83,15 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Roadmap", b =>
                 {
-                    b.Property<int>("RoadmapId")
+                    b.Property<Guid>("RoadmapId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RoadmapId"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -123,8 +117,8 @@ namespace Persistence.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("UserRoadmapUserId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("UserRoadmapUserId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("RoadmapId");
 
@@ -137,11 +131,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Section", b =>
                 {
-                    b.Property<int>("SectionId")
+                    b.Property<Guid>("SectionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SectionId"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -155,8 +147,8 @@ namespace Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("MilestoneId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("MilestoneId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .HasColumnType("text");
@@ -173,11 +165,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.ToDoTask", b =>
                 {
-                    b.Property<int>("TaskId")
+                    b.Property<Guid>("TaskId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TaskId"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -197,8 +187,8 @@ namespace Persistence.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.Property<int>("SectionId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("SectionId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -212,11 +202,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.UserRoadmap", b =>
                 {
-                    b.Property<int>("UserId")
+                    b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserId"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Email")
                         .HasColumnType("text");

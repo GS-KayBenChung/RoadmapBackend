@@ -2,8 +2,8 @@ namespace Domain
 {
     public class ToDoTask
     {
-        public int TaskId { get; set; }
-        public int SectionId { get; set; }
+        public Guid TaskId { get; set; }
+        public Guid SectionId { get; set; }
         public string Name { get; set; }
         public DateTime DateStart { get; set; }
         public DateTime DateEnd { get; set; }

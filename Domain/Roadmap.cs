@@ -2,10 +2,10 @@ namespace Domain
 {
     public class Roadmap
     {
-        public int RoadmapId { get; set; }
+        public Guid RoadmapId { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
-        public int CreatedBy { get; set; }
+        public Guid CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public float OverallProgress { get; set; }

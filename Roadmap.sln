@@ -3,21 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "API\API.csproj", "{2F6880F4-0515-480C-8B64-7E4300FAA816}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "API", "API\API.csproj", "{2F6880F4-0515-480C-8B64-7E4300FAA816}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\Application.csproj", "{4BF90E11-C96F-4DD1-9C8B-D7DDBFDEEB37}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "Application\Application.csproj", "{4BF90E11-C96F-4DD1-9C8B-D7DDBFDEEB37}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{E87F7F89-DD70-4B59-8B5D-8A985351AB67}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Domain\Domain.csproj", "{E87F7F89-DD70-4B59-8B5D-8A985351AB67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Persistence", "Persistence\Persistence.csproj", "{F25AE315-B749-4D14-ADE5-BAA4289C2977}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Persistence", "Persistence\Persistence.csproj", "{F25AE315-B749-4D14-ADE5-BAA4289C2977}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{4254E505-5C0E-427C-B056-AA721C48567A}"
+	ProjectSection(SolutionItems) = preProject
+		passport.ts = passport.ts
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{2F6880F4-0515-480C-8B64-7E4300FAA816}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -36,5 +38,11 @@ Global
 		{F25AE315-B749-4D14-ADE5-BAA4289C2977}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F25AE315-B749-4D14-ADE5-BAA4289C2977}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F25AE315-B749-4D14-ADE5-BAA4289C2977}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0A7D1A10-1D3F-4B60-82B8-B0309DA225A8}
 	EndGlobalSection
 EndGlobal

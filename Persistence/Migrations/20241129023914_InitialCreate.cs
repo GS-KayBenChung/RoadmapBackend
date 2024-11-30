@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -16,8 +15,7 @@ namespace Persistence.Migrations
                 name: "UserRoadmap",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: true),
                     Email = table.Column<string>(type: "text", nullable: true),
                     GoogleId = table.Column<string>(type: "text", nullable: true)
@@ -31,9 +29,8 @@ namespace Persistence.Migrations
                 name: "AuditLogs",
                 columns: table => new
                 {
-                    LogId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    LogId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     ActivityAction = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -52,11 +49,10 @@ namespace Persistence.Migrations
                 name: "Roadmaps",
                 columns: table => new
                 {
-                    RoadmapId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoadmapId = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: true),
                     Description = table.Column<string>(type: "text", nullable: true),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OverallProgress = table.Column<float>(type: "real", nullable: false),
@@ -64,7 +60,7 @@ namespace Persistence.Migrations
                     IsCompleted = table.Column<bool>(type: "boolean", nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     IsDraft = table.Column<bool>(type: "boolean", nullable: false),
-                    UserRoadmapUserId = table.Column<int>(type: "integer", nullable: true)
+                    UserRoadmapUserId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -86,9 +82,8 @@ namespace Persistence.Migrations
                 name: "Milestones",
                 columns: table => new
                 {
-                    MilestoneId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RoadmapId = table.Column<int>(type: "integer", nullable: false),
+                    MilestoneId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RoadmapId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: true),
                     Description = table.Column<string>(type: "text", nullable: true),
                     MilestoneProgress = table.Column<float>(type: "real", nullable: false),
@@ -112,9 +107,8 @@ namespace Persistence.Migrations
                 name: "Sections",
                 columns: table => new
                 {
-                    SectionId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    MilestoneId = table.Column<int>(type: "integer", nullable: false),
+                    SectionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MilestoneId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: true),
                     Description = table.Column<string>(type: "text", nullable: true),
                     IsCompleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -137,9 +131,8 @@ namespace Persistence.Migrations
                 name: "ToDoTasks",
                 columns: table => new
                 {
-                    TaskId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SectionId = table.Column<int>(type: "integer", nullable: false),
+                    TaskId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SectionId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: true),
                     DateStart = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateEnd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
