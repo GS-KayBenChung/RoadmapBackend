@@ -21,7 +21,7 @@ namespace Persistence
 
             modelBuilder.Entity<UserRoadmap>()
                 .HasKey(u => u.UserId);
-
+   
             modelBuilder.Entity<AuditLog>()
                 .HasKey(l => l.LogId);
 
@@ -37,7 +37,6 @@ namespace Persistence
             modelBuilder.Entity<ToDoTask>()
                 .HasKey(t => t.TaskId);
 
-            // Define relationships between entities
             modelBuilder.Entity<AuditLog>()
                 .HasOne(l => l.User)
                 .WithMany(u => u.Logs)

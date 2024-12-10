@@ -7,6 +7,8 @@ namespace Domain
         public string Email { get; set; }
         public string GoogleId { get; set; }
 
+        public DateTime CreatedAt { get; set; }
+
         public ICollection<Roadmap> Roadmaps { get; set; } = new List<Roadmap>();
         public ICollection<AuditLog> Logs { get; set; } = new List<AuditLog>();
     }
