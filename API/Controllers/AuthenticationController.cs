@@ -15,7 +15,7 @@ namespace API.Controllers
         [HttpPost("verify-token")]
         public async Task<IActionResult> VerifyToken([FromBody] TokenRequest tokenRequest)
         {
-            //tokenRequest.OauthToken = "ya29.a0AeDClZB18emBhgWYbz_0WupNgoPahSpSaDOCqua2DapKSNKe5bMwpV7M1VSo9wJat-KpeD65vs9zyOXLNquOdN45iy1PFb7yLJyffR-oTsUocIFtfgMj-PE6zs5hGMUftknAAcPDaHC0SEV3KyTOuElb4JHSS1GdbmMaCgYKAdUSARISFQHGX2MiUeyoEVlfuAkHt0zUxN7jvQ0170";
+          
             Console.WriteLine("Oauth: " + tokenRequest.OauthToken);
 
 
