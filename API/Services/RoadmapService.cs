@@ -21,11 +21,11 @@ namespace API.Services
                 Title = roadmapDto.Title,
                 Description = roadmapDto.Description,
                 CreatedBy = roadmapDto.CreatedBy,
-                CreatedAt = roadmapDto.CreatedAt, // Use the value from DTO
-                UpdatedAt = DateTime.UtcNow, // Use current UTC time for UpdatedAt
+                CreatedAt = roadmapDto.CreatedAt, 
+                UpdatedAt = DateTime.UtcNow, 
                 IsCompleted = false,
                 IsDeleted = false,
-                IsDraft = true,
+                IsDraft = roadmapDto.IsDraft,
             };
 
             foreach (var milestoneDto in roadmapDto.Milestones)
@@ -36,8 +36,8 @@ namespace API.Services
                     Name = milestoneDto.Name,
                     Description = milestoneDto.Description,
                     RoadmapId = roadmap.RoadmapId,
-                    CreatedAt = DateTime.UtcNow, // Set to current UTC time
-                    UpdatedAt = DateTime.UtcNow, // Set to current UTC time
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow, 
                     IsCompleted = false,
                     IsDeleted = false
                 };
@@ -50,8 +50,8 @@ namespace API.Services
                         Name = sectionDto.Name,
                         Description = sectionDto.Description,
                         MilestoneId = milestone.MilestoneId,
-                        CreatedAt = DateTime.UtcNow, // Set to current UTC time
-                        UpdatedAt = DateTime.UtcNow, // Set to current UTC time
+                        CreatedAt = DateTime.UtcNow, 
+                        UpdatedAt = DateTime.UtcNow, 
                         IsCompleted = false,
                         IsDeleted = false
                     };
@@ -65,8 +65,8 @@ namespace API.Services
                             DateStart = taskDto.DateStart,
                             DateEnd = taskDto.DateEnd,
                             SectionId = section.SectionId,
-                            CreatedAt = DateTime.UtcNow, // Set to current UTC time
-                            UpdatedAt = DateTime.UtcNow, // Set to current UTC time
+                            CreatedAt = DateTime.UtcNow, 
+                            UpdatedAt = DateTime.UtcNow, 
                             IsCompleted = false,
                             IsDeleted = false
                         };

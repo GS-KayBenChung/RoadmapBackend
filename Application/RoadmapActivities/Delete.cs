@@ -26,15 +26,27 @@ namespace Application.RoadmapActivities
                 _context = context;
             }
 
+            //public async Task Handle(Command request, CancellationToken cancellationToken)
+            //{
+            //    var roadmap = await _context.Roadmaps.FindAsync(request.Id);
+
+            //    _context.Remove(roadmap);
+
+            //    await _context.SaveChangesAsync();
+            //}
+
             public async Task Handle(Command request, CancellationToken cancellationToken)
             {
                 var roadmap = await _context.Roadmaps.FindAsync(request.Id);
+                if (roadmap == null)
+                {
+                    return ;
+                }
 
-                _context.Remove(roadmap);
-
+                roadmap.IsDeleted = true;
+                _context.Roadmaps.Update(roadmap);
                 await _context.SaveChangesAsync();
             }
-
         }
     }
 }

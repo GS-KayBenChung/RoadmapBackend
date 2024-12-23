@@ -1,35 +1,4 @@
-﻿//using Domain;
-//using MediatR;
-//using Persistence;
-
-//namespace Application.RoadmapActivities
-//{
-//    public class Create
-//    {
-//        public class Command: IRequest
-//        {
-//            public Roadmap Roadmap { get; set; }
-
-//        }
-//        public class Handler : IRequestHandler<Command>
-//        {
-//            private readonly DataContext _context;
-
-//            public Handler(DataContext context)
-//            {
-//                _context = context;
-//            }
-
-//            public async Task Handle(Command request, CancellationToken cancellationToken)
-//            {
-//                _context.Roadmaps.Add(request.Roadmap);
-//                await _context.SaveChangesAsync();
-//            }
-
-//        }
-//    }
-//}
-using Application.DTOs;
+﻿using Application.DTOs;
 using Domain;
 using MediatR;
 using Persistence;
@@ -52,14 +21,14 @@ public class Create
 
         public async Task Handle(Create.Command request, CancellationToken cancellationToken)
         {
-            // Ensure CreatedAt and UpdatedAt are assigned explicitly.
             var roadmap = new Roadmap
             {
                 Title = request.RoadmapDto.Title,
                 Description = request.RoadmapDto.Description,
+                IsDraft = request.RoadmapDto.IsDraft,
                 CreatedBy = request.RoadmapDto.CreatedBy,
-                CreatedAt = request.RoadmapDto.CreatedAt, // Use the value from DTO
-                UpdatedAt = DateTime.UtcNow, // Use current UTC time for UpdatedAt
+                CreatedAt = request.RoadmapDto.CreatedAt, 
+                UpdatedAt = DateTime.UtcNow, 
             };
 
             _context.Roadmaps.Add(roadmap);
@@ -71,8 +40,8 @@ public class Create
                     RoadmapId = roadmap.RoadmapId,
                     Name = milestoneDto.Name,
                     Description = milestoneDto.Description,
-                    CreatedAt = DateTime.UtcNow, // Set to current UTC time
-                    UpdatedAt = DateTime.UtcNow, // Set to current UTC time
+                    CreatedAt = DateTime.UtcNow, 
+                    UpdatedAt = DateTime.UtcNow, 
                 };
                 _context.Milestones.Add(milestone);
 
@@ -83,8 +52,8 @@ public class Create
                         MilestoneId = milestone.MilestoneId,
                         Name = sectionDto.Name,
                         Description = sectionDto.Description,
-                        CreatedAt = DateTime.UtcNow, // Set to current UTC time
-                        UpdatedAt = DateTime.UtcNow, // Set to current UTC time
+                        CreatedAt = DateTime.UtcNow, 
+                        UpdatedAt = DateTime.UtcNow, 
                     };
                     _context.Sections.Add(section);
 
@@ -96,8 +65,8 @@ public class Create
                             Name = taskDto.Name,
                             DateStart = taskDto.DateStart,
                             DateEnd = taskDto.DateEnd,
-                            CreatedAt = DateTime.UtcNow, // Set to current UTC time
-                            UpdatedAt = DateTime.UtcNow, // Set to current UTC time
+                            CreatedAt = DateTime.UtcNow, 
+                            UpdatedAt = DateTime.UtcNow, 
                         };
                         _context.ToDoTasks.Add(task);
                     }

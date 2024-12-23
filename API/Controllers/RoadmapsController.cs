@@ -20,6 +20,12 @@ namespace API.Controllers
             return await Mediator.Send(new Details.Query{ Id = id});
         }
 
+        [HttpGet("details/{id}")] // api/roadmaps/details/{id} NEW GET DETAILS
+        public async Task<ActionResult<RoadmapResponseDto>> GetRoadmapDetails(Guid id)
+        {
+            return await Mediator.Send(new GetDetails.Query { Id = id });
+        }
+
         [HttpPost] // api/roadmaps
         public async Task<IActionResult> CreateRoadmap([FromBody] RoadmapDto roadmapDto)
         {
@@ -28,7 +34,6 @@ namespace API.Controllers
                 return BadRequest("Invalid roadmap data.");
             }
 
-            // Send the DTO to MediatR to create the roadmap and related entities
             await Mediator.Send(new Create.Command { RoadmapDto = roadmapDto });
 
             return Ok();
@@ -55,5 +60,6 @@ namespace API.Controllers
             await Mediator.Send(new Delete.Command { Id = id });
             return Ok();
         }
+
     }
 }

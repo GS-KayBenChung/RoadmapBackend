@@ -6,9 +6,9 @@ namespace Application.DTOs
     {
         public string Title { get; set; }
         public string Description { get; set; }
+        public bool IsDraft { get; set; }
         public Guid CreatedBy { get; set; }
 
-        // Ensure CreatedAt is initialized with DateTime.UtcNow in the DTO
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public List<MilestoneDto> Milestones { get; set; }

@@ -19,7 +19,9 @@ namespace Application.RoadmapActivities
             }
             public async Task<List<Roadmap>> Handle(Query request, CancellationToken cancellationToken)
             {
-                return await _context.Roadmaps.ToListAsync();
+                return await _context.Roadmaps
+                    .Where(r => !r.IsDeleted)
+                    .ToListAsync();
             }
         }
     }
