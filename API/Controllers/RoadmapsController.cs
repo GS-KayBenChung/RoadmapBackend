@@ -38,20 +38,18 @@ namespace API.Controllers
 
             return Ok();
         }
-        //[HttpPost]
-        //public async Task<IActionResult> CreateRoadmap(Roadmap roadmap)
-        //{
-        //    await Mediator.Send(new Create.Command { Roadmap = roadmap });
-        //    return Ok();
-        //}
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> EditRoadmap(Guid id, Roadmap roadmap)
+        public async Task<IActionResult> EditRoadmap(Guid id, [FromBody] RoadmapDto roadmapDto)
         {
-            roadmap.RoadmapId = id;
-            await Mediator.Send(new Edit.Command { Roadmap = roadmap });
+            if (roadmapDto == null)
+            {
+                return BadRequest("Invalid roadmap data.");
+            }
+            await Mediator.Send(new Edit.Command { RoadmapId = id, RoadmapDto = roadmapDto });
             return Ok();
         }
+
 
 
         [HttpDelete("{id}")]
