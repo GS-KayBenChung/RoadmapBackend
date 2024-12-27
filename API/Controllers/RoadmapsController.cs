@@ -8,12 +8,18 @@ namespace API.Controllers
 {
     public class RoadmapsController : BaseApiController
     {
-        [HttpGet] //api/roadmaps
-        public async Task<ActionResult<List<Roadmap>>> GetRoadmaps()
+        //[HttpGet] //api/roadmaps
+        //public async Task<ActionResult<List<Roadmap>>> GetRoadmaps()
+        //{
+        //    return await Mediator.Send(new List.Query());
+        //}
+
+        [HttpGet] // api/roadmaps
+        public async Task<ActionResult<List<Roadmap>>> GetRoadmaps([FromQuery] string filter, [FromQuery] string search)
         {
-            return await Mediator.Send(new List.Query());
+            return await Mediator.Send(new List.Query { Filter = filter, Search = search });
         }
-        
+
         [HttpGet("{id}")] //api/roadmaps/id
         public async Task<ActionResult<Roadmap>> GetRoadmap(Guid id)
         {
