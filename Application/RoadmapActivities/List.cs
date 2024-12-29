@@ -11,6 +11,7 @@ namespace Application.RoadmapActivities
         {
             public string Filter { get; set; }
             public string Search { get; set; }
+            public DateTime? CreatedAfter { get; set; }
         }
 
         public class Handler : IRequestHandler<Query, List<Roadmap>>
@@ -29,15 +30,21 @@ namespace Application.RoadmapActivities
                     .AsNoTracking()
                     .AsQueryable();
 
+                if (request.CreatedAfter.HasValue)
+                {
+                    var startOfDay = request.CreatedAfter.Value.Date;
+                    var endOfDay = startOfDay.AddDays(1).AddTicks(-1);
+
+                    query = query.Where(r => r.CreatedAt >= startOfDay && r.CreatedAt <= endOfDay);
+                }
+
                 if (!string.IsNullOrEmpty(request.Filter))
                 {
                     query = request.Filter.ToLower() switch
                     {
                         "draft" => query.Where(r => r.IsDraft),
                         "completed" => query.Where(r => r.IsCompleted),
-                        //"inprogress" => query.Where(r => !r.IsCompleted && !r.IsDraft),
-                        //"overdue" => query.Where(r => r.DueDate < DateTime.UtcNow && !r.IsCompleted),
-                        _ => query 
+                        _ => query
                     };
                 }
 
@@ -46,7 +53,6 @@ namespace Application.RoadmapActivities
                     query = query.Where(r =>
                         r.Title.ToLower().Contains(request.Search.ToLower()));
                 }
-                //Console.WriteLine($"Result count: {query.Count()}");
 
                 return await query.ToListAsync(cancellationToken);
             }

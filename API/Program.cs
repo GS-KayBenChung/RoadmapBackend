@@ -2,25 +2,33 @@ using API.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 using Serilog;
+using Serilog.Context;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//SERILOG
+// SERILOG
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(new ConfigurationBuilder()
         .AddJsonFile("appsettings.json")
         .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
         .Build())
     .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File("Logs/complete.log", rollingInterval: RollingInterval.Day)
-    .WriteTo.File("Logs/errors.log", rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Error)  // Error logs
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss}] [{Level}] [{TraceId}] {Message}{NewLine}")
+    .WriteTo.File(
+        "Logs/complete.log",
+        rollingInterval: RollingInterval.Day,
+        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss}] [{Level}] [{TraceId}] {Message}{NewLine}")
+    .WriteTo.File(
+        "Logs/errors.log",
+        rollingInterval: RollingInterval.Day,
+        restrictedToMinimumLevel: LogEventLevel.Error,
+        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss}] [{Level}] [{TraceId}] {Message}{NewLine}")
     .CreateLogger();
 
 builder.Host.UseSerilog();
-
-
-//SERILOG
+// SERILOG
 
 // Configure JWT authentication
 builder.Services.AddAuthentication("Bearer")
@@ -47,8 +55,16 @@ builder.Services.AddApplicationServices(builder.Configuration);
 
 var app = builder.Build();
 
-//SERILOG
+// SERILOG
 app.UseSerilogRequestLogging();
+// SERILOG TraceID
+app.Use(async (context, next) =>
+{
+    using (LogContext.PushProperty("TraceId", Guid.NewGuid().ToString()))
+    {
+        await next.Invoke();
+    }
+});
 
 builder.Services.AddAuthorization();
 
