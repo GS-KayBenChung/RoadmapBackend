@@ -24,6 +24,13 @@ namespace API.Controllers
             return await Mediator.Send(new Details.Query{ Id = id});
         }
 
+        [HttpGet("logs")]
+        public async Task<ActionResult<List<RoadmapLogsDto>>> GetLogs([FromQuery] string filter, [FromQuery] string search)
+        {
+            Console.WriteLine($"Received Filter: {filter}, Search: {search}");
+            return await Mediator.Send(new GetLogs.Query { Filter = filter, Search = search });
+        }
+
         [HttpGet("details/{id}")] // api/roadmaps/details/{id} NEW GET DETAILS
         public async Task<ActionResult<RoadmapResponseDto>> GetRoadmapDetails(Guid id)
         {
