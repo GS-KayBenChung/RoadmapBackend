@@ -7,18 +7,12 @@ namespace API.Controllers
 {
     public class RoadmapsController : BaseApiController
     {
-        //[HttpGet] // api/roadmaps
-        //public async Task<ActionResult<List<Roadmap>>> GetRoadmaps([FromQuery] string filter, [FromQuery] string search)
-        //{
-        //    return await Mediator.Send(new List.Query { Filter = filter, Search = search });
-        //}
-        [HttpGet] // api/roadmaps
+        [HttpGet] 
         public async Task<ActionResult<List<Roadmap>>> GetRoadmaps([FromQuery] string filter, [FromQuery] string search, [FromQuery] DateTime? createdAfter)
         {
             return await Mediator.Send(new List.Query { Filter = filter, Search = search, CreatedAfter = createdAfter });
         }
-
-        [HttpGet("{id}")] //api/roadmaps/id
+        [HttpGet("{id}")] 
         public async Task<ActionResult<Roadmap>> GetRoadmap(Guid id)
         {
             return await Mediator.Send(new Details.Query{ Id = id});
@@ -27,39 +21,34 @@ namespace API.Controllers
         [HttpGet("logs")]
         public async Task<ActionResult<List<RoadmapLogsDto>>> GetLogs([FromQuery] string filter, [FromQuery] string search)
         {
-            Console.WriteLine($"Received Filter: {filter}, Search: {search}");
             return await Mediator.Send(new GetLogs.Query { Filter = filter, Search = search });
         }
 
-        [HttpGet("details/{id}")] // api/roadmaps/details/{id} NEW GET DETAILS
+        [HttpGet("details/{id}")]
         public async Task<ActionResult<RoadmapResponseDto>> GetRoadmapDetails(Guid id)
         {
             return await Mediator.Send(new GetDetails.Query { Id = id });
         }
 
-        [HttpPost] // api/roadmaps
+        [HttpPost]
         public async Task<IActionResult> CreateRoadmap([FromBody] RoadmapDto roadmapDto)
         {
-            if (roadmapDto == null)
+            try
             {
-                return BadRequest("Invalid roadmap data.");
+                var command = new Create.Command { RoadmapDto = roadmapDto };
+                await Mediator.Send(command);
+                return Ok(new { message = "Roadmap created successfully." });
             }
-
-            await Mediator.Send(new Create.Command { RoadmapDto = roadmapDto });
-
-            return Ok();
+            catch (ApplicationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An unexpected error occurred." });
+            }
         }
 
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> EditRoadmap(Guid id, [FromBody] RoadmapDto roadmapDto)
-        //{
-        //    if (roadmapDto == null)
-        //    {
-        //        return BadRequest("Invalid roadmap data.");
-        //    }
-        //    await Mediator.Send(new Edit.Command { RoadmapId = id, RoadmapDto = roadmapDto });
-        //    return Ok();
-        //}
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateRoadmap(Guid id, UpdateRoadmap.Command command)
         {
@@ -71,9 +60,34 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoadmap(Guid id)
         {
-            await Mediator.Send(new Delete.Command { Id = id });
-            return Ok();
+            try
+            {
+                var command = new Delete.Command { Id = id };
+                await Mediator.Send(command);
+                return Ok(new { message = "Roadmap deleted successfully." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { error = ex.Message });
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An unexpected error occurred while deleting the roadmap." });
+            }
         }
+
+        [HttpPut("checkboxes/{id}")]
+        public async Task<IActionResult> UpdateCheckboxes(Guid id, [FromBody] UpdateCheckedBoxes.Command command)
+        {
+            command.Id = id;
+            await Mediator.Send(command);
+            return NoContent();
+        }
+
 
     }
 }

@@ -24,20 +24,17 @@ public class GetLogs
         {
             var query = _context.AuditLogs.AsQueryable();
 
-            Console.WriteLine($"Filter: {request.Filter}, Search: {request.Search}");
 
             if (!string.IsNullOrEmpty(request.Search))
             {
                 query = query.Where(log =>
                     log.ActivityAction.Contains(request.Search) || log.LogId.ToString().Contains(request.Search));
-                Console.WriteLine($"Applied Search: {request.Search}");
             }
 
             if (!string.IsNullOrEmpty(request.Filter))
             {
                 var filter = request.Filter.ToLower();
 
-                Console.WriteLine($"Applying Filter: {filter}");
 
                 if (filter == "created")
                 {
@@ -63,8 +60,6 @@ public class GetLogs
                     CreatedAt = log.CreatedAt
                 })
                 .ToListAsync(cancellationToken);
-
-            Console.WriteLine($"Number of logs found: {logs.Count}");
 
             return logs;
         }

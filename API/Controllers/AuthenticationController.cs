@@ -25,13 +25,8 @@ namespace API.Controllers
             }
 
             using var client = new HttpClient();
-            //var response = await client.GetStringAsync($"https://www.googleapis.com/oauth2/v3/tokeninfo?id_token={tokenRequest.OauthToken}");
             var response = await GoogleJsonWebSignature.ValidateAsync(tokenRequest.OauthToken);
             Console.WriteLine("email: " + response.Email);
-               
-
-
-            // var userInfo = JsonConvert.DeserializeObject<GoogleUserInfo>(response);
 
             var userInfo = "123";
 
@@ -41,7 +36,6 @@ namespace API.Controllers
             }
 
             var jwt = "";
-            //var jwt = GenerateJwtToken(userInfo);
             return Ok(new { token = jwt, user = userInfo });
         }
 
@@ -49,8 +43,6 @@ namespace API.Controllers
         {
             public string OauthToken { get; set; }
         }
-
-
 
         private string GenerateJwtToken(GoogleUserInfo userInfo)
         {
@@ -60,15 +52,9 @@ namespace API.Controllers
                 new Claim(ClaimTypes.Email, userInfo.Email),
             };
 
-            //var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your-secret-key"));
-            //var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
             var token = new JwtSecurityToken(
-                //issuer: "Roadmap",
-                //audience: "GoSaas"
                 claims: claims,
                 expires: DateTime.Now.AddHours(1)
-               // signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);

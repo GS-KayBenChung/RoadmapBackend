@@ -12,9 +12,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Persistence", "Persistence\Persistence.csproj", "{F25AE315-B749-4D14-ADE5-BAA4289C2977}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{4254E505-5C0E-427C-B056-AA721C48567A}"
-	ProjectSection(SolutionItems) = preProject
-		passport.ts = passport.ts
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

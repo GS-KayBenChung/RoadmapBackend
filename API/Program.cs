@@ -7,28 +7,8 @@ using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// SERILOG
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(new ConfigurationBuilder()
-        .AddJsonFile("appsettings.json")
-        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
-        .Build())
-    .Enrich.FromLogContext()
-    .WriteTo.Console(
-        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss}] [{Level}] [{TraceId}] {Message}{NewLine}")
-    .WriteTo.File(
-        "Logs/complete.log",
-        rollingInterval: RollingInterval.Day,
-        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss}] [{Level}] [{TraceId}] {Message}{NewLine}")
-    .WriteTo.File(
-        "Logs/errors.log",
-        rollingInterval: RollingInterval.Day,
-        restrictedToMinimumLevel: LogEventLevel.Error,
-        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss}] [{Level}] [{TraceId}] {Message}{NewLine}")
-    .CreateLogger();
-
-builder.Host.UseSerilog();
-// SERILOG
+builder.Host.UseSerilog((context, services, configuration) =>
+    configuration.ReadFrom.Configuration(context.Configuration));
 
 // Configure JWT authentication
 builder.Services.AddAuthentication("Bearer")

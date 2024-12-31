@@ -21,59 +21,80 @@ public class Create
 
         public async Task Handle(Create.Command request, CancellationToken cancellationToken)
         {
-            var roadmap = new Roadmap
+            try
             {
-                Title = request.RoadmapDto.Title,
-                Description = request.RoadmapDto.Description,
-                IsDraft = request.RoadmapDto.IsDraft,
-                CreatedBy = request.RoadmapDto.CreatedBy,
-                CreatedAt = request.RoadmapDto.CreatedAt, 
-                UpdatedAt = DateTime.UtcNow, 
-            };
-
-            _context.Roadmaps.Add(roadmap);
-
-            foreach (var milestoneDto in request.RoadmapDto.Milestones)
-            {
-                var milestone = new Milestone
+                if (string.IsNullOrEmpty(request.RoadmapDto.Title) || request.RoadmapDto.Title.Length > 50)
                 {
-                    RoadmapId = roadmap.RoadmapId,
-                    Name = milestoneDto.Name,
-                    Description = milestoneDto.Description,
-                    CreatedAt = DateTime.UtcNow, 
-                    UpdatedAt = DateTime.UtcNow, 
+                    throw new ArgumentException("Roadmap title must be between 1 and 50 characters.");
+                }
+
+                if (string.IsNullOrEmpty(request.RoadmapDto.Description) || request.RoadmapDto.Description.Length > 100)
+                {
+                    throw new ArgumentException("Roadmap description must be between 1 and 100 characters.");
+                }
+
+                var roadmap = new Roadmap
+                {
+                    Title = request.RoadmapDto.Title,
+                    Description = request.RoadmapDto.Description,
+                    IsDraft = request.RoadmapDto.IsDraft,
+                    CreatedBy = request.RoadmapDto.CreatedBy,
+                    CreatedAt = request.RoadmapDto.CreatedAt,
+                    UpdatedAt = DateTime.UtcNow,
                 };
-                _context.Milestones.Add(milestone);
 
-                foreach (var sectionDto in milestoneDto.Sections)
+                _context.Roadmaps.Add(roadmap);
+
+                foreach (var milestoneDto in request.RoadmapDto.Milestones)
                 {
-                    var section = new Section
+                    var milestone = new Milestone
                     {
-                        MilestoneId = milestone.MilestoneId,
-                        Name = sectionDto.Name,
-                        Description = sectionDto.Description,
-                        CreatedAt = DateTime.UtcNow, 
-                        UpdatedAt = DateTime.UtcNow, 
+                        RoadmapId = roadmap.RoadmapId,
+                        Name = milestoneDto.Name,
+                        Description = milestoneDto.Description,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
                     };
-                    _context.Sections.Add(section);
+                    _context.Milestones.Add(milestone);
 
-                    foreach (var taskDto in sectionDto.Tasks)
+                    foreach (var sectionDto in milestoneDto.Sections)
                     {
-                        var task = new ToDoTask
+                        var section = new Section
                         {
-                            SectionId = section.SectionId,
-                            Name = taskDto.Name,
-                            DateStart = taskDto.DateStart,
-                            DateEnd = taskDto.DateEnd,
-                            CreatedAt = DateTime.UtcNow, 
-                            UpdatedAt = DateTime.UtcNow, 
+                            MilestoneId = milestone.MilestoneId,
+                            Name = sectionDto.Name,
+                            Description = sectionDto.Description,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
                         };
-                        _context.ToDoTasks.Add(task);
+                        _context.Sections.Add(section);
+
+                        foreach (var taskDto in sectionDto.Tasks)
+                        {
+                            var task = new ToDoTask
+                            {
+                                SectionId = section.SectionId,
+                                Name = taskDto.Name,
+                                DateStart = taskDto.DateStart,
+                                DateEnd = taskDto.DateEnd,
+                                CreatedAt = DateTime.UtcNow,
+                                UpdatedAt = DateTime.UtcNow,
+                            };
+                            _context.ToDoTasks.Add(task);
+                        }
                     }
                 }
-            }
 
-            await _context.SaveChangesAsync(cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (ArgumentException ex)
+            {
+                throw new ApplicationException($"Validation error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("An unexpected error occurred while creating the roadmap.");
+            }
         }
     }
 }

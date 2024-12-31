@@ -12,7 +12,7 @@ namespace Application.RoadmapActivities
             public Guid Id { get; set; }
         }
 
-        public class Handler : IRequestHandler<Query, Roadmap>
+        public class Handler : IRequestHandler<Details.Query, Roadmap>
         {
             private readonly DataContext _context;
 
@@ -21,9 +21,11 @@ namespace Application.RoadmapActivities
                 _context = context;
             }
 
-            public async Task<Roadmap> Handle(Query request, CancellationToken cancellationToken)
+            public async Task<Roadmap> Handle(Details.Query request, CancellationToken cancellationToken)
             {
-                return await _context.Roadmaps.FindAsync(request.Id);
+                var roadmap = await _context.Roadmaps.FindAsync(new object[] { request.Id }, cancellationToken);
+
+                return roadmap;
             }
         }
 

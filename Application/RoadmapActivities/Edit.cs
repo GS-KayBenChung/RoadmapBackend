@@ -82,12 +82,11 @@ namespace Application.RoadmapActivities
                 try
                 {
                     var success = await _context.SaveChangesAsync(cancellationToken);
-                    Console.WriteLine($"Number of rows updated: {success}");
+               
                     if (success <= 0) throw new Exception("Failed to update roadmap");
                 }
                 catch (DbUpdateException ex)
                 {
-                    Console.WriteLine($"Database update error: {ex.InnerException?.Message}");
                     throw;
                 }
             }

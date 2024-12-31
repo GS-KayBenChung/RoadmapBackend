@@ -15,8 +15,8 @@ namespace Application.RoadmapActivities
         public class Command : IRequest
         {
             public Guid Id { get; set; }
-
         }
+
         public class Handler : IRequestHandler<Command>
         {
             private readonly DataContext _context;
@@ -25,27 +25,31 @@ namespace Application.RoadmapActivities
             {
                 _context = context;
             }
-
-            //public async Task Handle(Command request, CancellationToken cancellationToken)
-            //{
-            //    var roadmap = await _context.Roadmaps.FindAsync(request.Id);
-
-            //    _context.Remove(roadmap);
-
-            //    await _context.SaveChangesAsync();
-            //}
-
             public async Task Handle(Command request, CancellationToken cancellationToken)
             {
-                var roadmap = await _context.Roadmaps.FindAsync(request.Id);
-                if (roadmap == null)
+                try
                 {
-                    return ;
-                }
+                    var roadmap = await _context.Roadmaps.FindAsync(request.Id);
 
-                roadmap.IsDeleted = true;
-                _context.Roadmaps.Update(roadmap);
-                await _context.SaveChangesAsync();
+                    if (roadmap == null)
+                    {
+                        throw new KeyNotFoundException("Roadmap not found.");
+                    }
+           
+                    roadmap.IsDeleted = true;
+            
+                    _context.Roadmaps.Update(roadmap);
+
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    throw new ApplicationException($"Error: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    throw new ApplicationException("An unexpected error occurred while deleting the roadmap.");
+                }
             }
         }
     }
