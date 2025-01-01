@@ -5,13 +5,15 @@ using Persistence;
 
 public class GetLogs
 {
-    public class Query : IRequest<List<RoadmapLogsDto>>
+    public class Query : IRequest<PaginatedLogResult<RoadmapLogsDto>>
     {
         public string Filter { get; set; } 
-        public string Search { get; set; }  
+        public string Search { get; set; }
+        public int PageNumber { get; set; } = 1; 
+        public int PageSize { get; set; } = 10; 
     }
 
-    public class Handler : IRequestHandler<Query, List<RoadmapLogsDto>>
+    public class Handler : IRequestHandler<Query, PaginatedLogResult<RoadmapLogsDto>>
     {
         private readonly DataContext _context;
 
@@ -20,21 +22,21 @@ public class GetLogs
             _context = context;
         }
 
-        public async Task<List<RoadmapLogsDto>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<PaginatedLogResult<RoadmapLogsDto>> Handle(Query request, CancellationToken cancellationToken)
         {
             var query = _context.AuditLogs.AsQueryable();
 
-
+        
             if (!string.IsNullOrEmpty(request.Search))
             {
                 query = query.Where(log =>
                     log.ActivityAction.Contains(request.Search) || log.LogId.ToString().Contains(request.Search));
             }
 
+         
             if (!string.IsNullOrEmpty(request.Filter))
             {
                 var filter = request.Filter.ToLower();
-
 
                 if (filter == "created")
                 {
@@ -50,8 +52,14 @@ public class GetLogs
                 }
             }
 
+          
+            var totalCount = await query.CountAsync(cancellationToken);
+
+           
             var logs = await query
                 .OrderByDescending(log => log.CreatedAt)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .Select(log => new RoadmapLogsDto
                 {
                     LogId = log.LogId,
@@ -61,8 +69,19 @@ public class GetLogs
                 })
                 .ToListAsync(cancellationToken);
 
-            return logs;
+        
+            var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
+
+            return new PaginatedLogResult<RoadmapLogsDto>
+            {
+                Items = logs,
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                CurrentPage = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
+
 
     }
 

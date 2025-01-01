@@ -1,63 +1,49 @@
-using Google.Apis.Auth;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+//using API.Controllers;
+//using Microsoft.AspNetCore.Mvc;
+//using Microsoft.IdentityModel.JsonWebTokens;
+//using System.IdentityModel.Tokens.Jwt;
 
-namespace API.Controllers
-{
-    [ApiController]
-    [Route("api/auth")]
-    public class AuthController : ControllerBase
-    {
-        [HttpPost("verify-token")]
-        public async Task<IActionResult> VerifyToken([FromBody] TokenRequest tokenRequest)
-        {
-          
-            Console.WriteLine("Oauth: " + tokenRequest.OauthToken);
+//public class AuthenticationController : BaseApiController
+//{
+//    [HttpPost("googlelogin")]
+//    public IActionResult GoogleLogin([FromBody] GoogleLoginDto dto)
+//    {
+//        Console.WriteLine(dto.Token);
+//        var handler = new JwtSecurityTokenHandler();
+//        var jwt = handler.ReadJwtToken(dto.Token);
+
+//        return Ok(new { Message = "Login Successful", UserId = jwt.Subject });
+//    }
+//}
+//public class GoogleLoginDto
+//{
+//    public string Token { get; set; }
+//}
 
 
-            if (string.IsNullOrEmpty(tokenRequest.OauthToken))
-            {
-                return BadRequest("OAuth token is required.");
-            }
+//using Application.Users;
+//using Microsoft.AspNetCore.Mvc;
+//using MediatR;
+//using Microsoft.Extensions.Logging;
+//using Application.Dto;
+//using Serilog;
 
-            using var client = new HttpClient();
-            var response = await GoogleJsonWebSignature.ValidateAsync(tokenRequest.OauthToken);
-            Console.WriteLine("email: " + response.Email);
+//namespace API.Controllers
+//{
+//    public class AuthenticationController : BaseApiController
+//    {
+//        private readonly IMediator _mediator;
 
-            var userInfo = "123";
+//        public AuthenticationController(IMediator mediator, ILogger<AuthenticationController> logger)
+//        {
+//            _mediator = mediator;
+//        }
 
-            if (userInfo == null)
-            {
-                return Unauthorized("Invalid token");
-            }
-
-            var jwt = "";
-            return Ok(new { token = jwt, user = userInfo });
-        }
-
-        public class TokenRequest
-        {
-            public string OauthToken { get; set; }
-        }
-
-        private string GenerateJwtToken(GoogleUserInfo userInfo)
-        {
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name, userInfo.Name),
-                new Claim(ClaimTypes.Email, userInfo.Email),
-            };
-
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.Now.AddHours(1)
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-    }
-}
+//        [HttpPost("googleresponse")]
+//        public async Task<IActionResult> GoogleResponse([FromBody] CredentialRequest request)
+//        {
+//            var response = await _mediator.Send(new Login.Command { Credential = request.Credential });
+//            return Ok(response);
+//        }
+//    }
+//}

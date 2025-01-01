@@ -1,5 +1,6 @@
 using API.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Persistence;
 using Serilog;
 using Serilog.Context;
@@ -10,15 +11,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((context, services, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
-// Configure JWT authentication
-builder.Services.AddAuthentication("Bearer")
+//NEW GOOGLEAUTH
+builder.Services.AddAuthentication("Google")
     .AddJwtBearer(options =>
     {
         options.Authority = "https://accounts.google.com";
-        options.Audience = "36494825135-hb6snjuupfv7r5pqdupedv1u1oklvj44.apps.googleusercontent.com";
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "accounts.google.com",
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Authentication:Google:ClientId"]
+        };
     });
-// Configure JWT authentication
 
+builder.Services.AddAuthorization();
+//NEW GOOGLEAUTH
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -46,7 +54,7 @@ app.Use(async (context, next) =>
     }
 });
 
-builder.Services.AddAuthorization();
+
 
 // Use Authentication Middleware
 app.UseAuthentication();

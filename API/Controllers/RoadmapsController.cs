@@ -18,10 +18,26 @@ namespace API.Controllers
             return await Mediator.Send(new Details.Query{ Id = id});
         }
 
+        //[HttpGet("logs")]
+        //public async Task<ActionResult<List<RoadmapLogsDto>>> GetLogs([FromQuery] string filter, [FromQuery] string search)
+        //{
+        //    return await Mediator.Send(new GetLogs.Query { Filter = filter, Search = search });
+        //}
+
         [HttpGet("logs")]
-        public async Task<ActionResult<List<RoadmapLogsDto>>> GetLogs([FromQuery] string filter, [FromQuery] string search)
+        public async Task<ActionResult<PaginatedLogResult<RoadmapLogsDto>>> GetLogs(
+            [FromQuery] string filter,
+            [FromQuery] string search,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
-            return await Mediator.Send(new GetLogs.Query { Filter = filter, Search = search });
+            return await Mediator.Send(new GetLogs.Query
+            {
+                Filter = filter,
+                Search = search,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            });
         }
 
         [HttpGet("details/{id}")]
