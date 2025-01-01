@@ -7,11 +7,35 @@ namespace API.Controllers
 {
     public class RoadmapsController : BaseApiController
     {
-        [HttpGet] 
-        public async Task<ActionResult<List<Roadmap>>> GetRoadmaps([FromQuery] string filter, [FromQuery] string search, [FromQuery] DateTime? createdAfter)
+        //[HttpGet] 
+        //public async Task<ActionResult<List<Roadmap>>> GetRoadmaps(
+        //    [FromQuery] string filter, 
+        //    [FromQuery] string search, 
+        //    [FromQuery] DateTime? createdAfter
+        //    )
+        //{
+        //    return await Mediator.Send(new List.Query { Filter = filter, Search = search, CreatedAfter = createdAfter });
+        //}
+
+        [HttpGet]
+        public async Task<ActionResult<PaginatedRoadmapResult<Roadmap>>> GetRoadmaps(
+            [FromQuery] string filter,
+            [FromQuery] string search,
+            [FromQuery] DateTime? createdAfter,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
-            return await Mediator.Send(new List.Query { Filter = filter, Search = search, CreatedAfter = createdAfter });
+            return await Mediator.Send(new List.Query 
+            {
+                Filter = filter,
+                Search = search,
+                CreatedAfter = createdAfter,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            });
         }
+
+
         [HttpGet("{id}")] 
         public async Task<ActionResult<Roadmap>> GetRoadmap(Guid id)
         {

@@ -1,5 +1,6 @@
 ﻿
-    public class PaginatedLogResult<T>
+
+    public class PaginatedRoadmapResult<T>
     {
         public List<T> Items { get; set; } = new();
         public int TotalCount { get; set; }
