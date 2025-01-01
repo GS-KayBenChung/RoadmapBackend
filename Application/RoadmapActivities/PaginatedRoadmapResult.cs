@@ -1,5 +1,4 @@
 ﻿
-
     public class PaginatedRoadmapResult<T>
     {
         public List<T> Items { get; set; } = new();

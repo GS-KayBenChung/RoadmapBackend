@@ -7,15 +7,13 @@ namespace API.Controllers
 {
     public class RoadmapsController : BaseApiController
     {
-        //[HttpGet] 
-        //public async Task<ActionResult<List<Roadmap>>> GetRoadmaps(
-        //    [FromQuery] string filter, 
-        //    [FromQuery] string search, 
-        //    [FromQuery] DateTime? createdAfter
-        //    )
-        //{
-        //    return await Mediator.Send(new List.Query { Filter = filter, Search = search, CreatedAfter = createdAfter });
-        //}
+
+        [HttpGet("dashboard")]
+        public async Task<ActionResult<DashboardStats>> GetDashboardData()
+        {
+            var response = await Mediator.Send(new DashboardList.Query());
+            return Ok(response); 
+        }
 
         [HttpGet]
         public async Task<ActionResult<PaginatedRoadmapResult<Roadmap>>> GetRoadmaps(
