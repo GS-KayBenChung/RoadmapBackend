@@ -26,7 +26,6 @@ namespace Application.RoadmapActivities
 
             public async Task<PaginatedRoadmapResult<Roadmap>> Handle(Query request, CancellationToken cancellationToken)
             {
-                Console.WriteLine($"Handling request for filter: {request.Filter}, created after: {request.CreatedAfter}");
 
                 var query = _context.Roadmaps
                     .Where(r => !r.IsDeleted)
@@ -45,29 +44,24 @@ namespace Application.RoadmapActivities
                 if (!string.IsNullOrEmpty(request.Filter))
                 {
                     Console.WriteLine($"Applying filter: {request.Filter.ToLower()}");
-                    if (request.Filter.ToLower() == "overdue")
+
+                    query = request.Filter.ToLower() switch
                     {
-                        var roadmapsOver = await query.ToListAsync(cancellationToken);
-                        roadmapsOver = roadmapsOver.Where(r => IsOverdue(r)).ToList();
-                        Console.WriteLine($"Filtered {roadmapsOver.Count} overdue roadmaps");
-                        return CreatePaginatedResult(roadmapsOver, request);
-                    }
-                    else if (request.Filter.ToLower() == "neardue")
-                    {
-                        var roadmapsNear = await query.ToListAsync(cancellationToken);
-                        roadmapsNear = roadmapsNear.Where(r => IsNearDue(r)).ToList();
-                        Console.WriteLine($"Filtered {roadmapsNear.Count} neardue roadmaps");
-                        return CreatePaginatedResult(roadmapsNear, request);
-                    }
-                    else
-                    {
-                        query = request.Filter.ToLower() switch
-                        {
-                            "draft" => query.Where(r => r.IsDraft),
-                            "completed" => query.Where(r => r.IsCompleted),
-                            _ => query
-                        };
-                    }
+                        "draft" => query.Where(r => r.IsDraft),
+                        "completed" => query.Where(r => r.IsCompleted),
+                        "neardue" => query.Where(r =>
+                            r.Milestones.SelectMany(m => m.Sections)
+                                        .SelectMany(s => s.ToDoTasks)
+                                        .Max(t => (DateTime?)t.DateEnd) <= DateTime.UtcNow.AddDays(7) &&
+                            r.Milestones.SelectMany(m => m.Sections)
+                                        .SelectMany(s => s.ToDoTasks)
+                                        .Max(t => (DateTime?)t.DateEnd) > DateTime.UtcNow),
+                        "overdue" => query.Where(r =>
+                            r.Milestones.SelectMany(m => m.Sections)
+                                        .SelectMany(s => s.ToDoTasks)
+                                        .Max(t => (DateTime?)t.DateEnd) < DateTime.UtcNow),
+                        _ => query
+                    };
                 }
 
                 if (!string.IsNullOrEmpty(request.Search))
@@ -77,7 +71,6 @@ namespace Application.RoadmapActivities
 
                 var totalCount = await query.CountAsync(cancellationToken);
 
-                Console.WriteLine($"Total count after filters: {totalCount}");
 
                 var roadmaps = await query
                     .Skip((request.PageNumber - 1) * request.PageSize)
@@ -96,19 +89,25 @@ namespace Application.RoadmapActivities
                 };
             }
 
-
             private bool IsOverdue(Roadmap roadmap)
             {
                 var dueDate = GetLatestTaskDueDate(roadmap);
-                Console.WriteLine($"Checking if roadmap is overdue, due date: {dueDate}");
-                return dueDate.HasValue && dueDate.Value < DateTime.UtcNow;
+                if (!dueDate.HasValue)
+                {
+                    Console.WriteLine($"No due date found for roadmap {roadmap.RoadmapId}");
+                    return false;
+                }
+                return dueDate.Value < DateTime.UtcNow;
             }
 
             private bool IsNearDue(Roadmap roadmap)
             {
                 var dueDate = GetLatestTaskDueDate(roadmap);
-                Console.WriteLine($"Checking if roadmap is near due, due date: {dueDate}");
-                return dueDate.HasValue && dueDate.Value <= DateTime.UtcNow.AddDays(7) && dueDate.Value > DateTime.UtcNow;
+                if (!dueDate.HasValue)
+                {
+                    return false;
+                }
+                return dueDate.Value <= DateTime.UtcNow.AddDays(7) && dueDate.Value > DateTime.UtcNow;
             }
 
             private DateTime? GetLatestTaskDueDate(Roadmap roadmap)
@@ -121,14 +120,7 @@ namespace Application.RoadmapActivities
                     {
                         foreach (var task in section.ToDoTasks)
                         {
-                            if (task.IsDeleted)
-                            {
-                                Console.WriteLine($"Skipping task with ID {task.TaskId} because it is deleted.");
-                                continue;
-                            }
-
                             var taskEndDate = task.DateEnd;
-                            Console.WriteLine($"Task due date: {taskEndDate}");
 
                             if ((!latestDate.HasValue || taskEndDate > latestDate))
                             {
@@ -138,7 +130,6 @@ namespace Application.RoadmapActivities
                         }
                     }
                 }
-                Console.WriteLine($"Latest task due date for roadmapxdfb: {latestDate}");
                 return latestDate;
             }
 
