@@ -19,17 +19,22 @@ namespace API.Controllers
         public async Task<ActionResult<PaginatedRoadmapResult<Roadmap>>> GetRoadmaps(
             [FromQuery] string filter,
             [FromQuery] string search,
-            [FromQuery] DateTime? createdAfter,
+            [FromQuery] DateTime? date,
             [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10)
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string sortBy = "UpdatedAt",
+            [FromQuery] int asc = 1)
+
         {
             return await Mediator.Send(new List.Query 
             {
                 Filter = filter,
                 Search = search,
-                CreatedAfter = createdAfter,
+                CreatedAfter = date,
                 PageNumber = pageNumber,
-                PageSize = pageSize
+                PageSize = pageSize,
+                SortBy = sortBy,
+                Asc = asc
             });
         }
 

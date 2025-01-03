@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
+using System.Linq.Dynamic.Core;
 
 namespace Application.RoadmapActivities
 {
@@ -14,6 +15,8 @@ namespace Application.RoadmapActivities
             public DateTime? CreatedAfter { get; set; }
             public int PageNumber { get; set; } = 1;
             public int PageSize { get; set; } = 10;
+            public string SortBy { get; set; } 
+            public int Asc { get; set; } 
         }
         public class Handler : IRequestHandler<Query, PaginatedRoadmapResult<Roadmap>>
         {
@@ -29,7 +32,7 @@ namespace Application.RoadmapActivities
 
                 var query = _context.Roadmaps
                     .Where(r => !r.IsDeleted)
-                    .OrderByDescending(r => r.UpdatedAt)
+                    //.OrderByDescending(r => r.UpdatedAt)
                     .AsNoTracking()
                     .AsQueryable();
 
@@ -37,7 +40,7 @@ namespace Application.RoadmapActivities
                 {
                     var startOfDay = request.CreatedAfter.Value.Date;
                     var endOfDay = startOfDay.AddDays(1).AddTicks(-1);
-                    query = query.Where(r => r.CreatedAt >= startOfDay && r.CreatedAt <= endOfDay);
+                    query = query.Where(r => r.CreatedAt >= startOfDay);
                     Console.WriteLine($"Filtering created after: {startOfDay} to {endOfDay}");
                 }
 
@@ -68,6 +71,33 @@ namespace Application.RoadmapActivities
                 {
                     query = query.Where(r => r.Title.ToLower().Contains(request.Search.ToLower()));
                 }
+
+
+                if (!string.IsNullOrEmpty(request.SortBy))
+                {
+                    if (request.Asc != 1 && request.Asc != 0)
+                    {
+                        throw new Exception("Order Type must be 1 (asc) or 0 (desc)");
+                    }
+
+                    string sortOrder = request.Asc == 1 ? "ascending" : "descending";
+                    string sortExpression = $"{request.SortBy} {sortOrder}";
+
+                    Console.WriteLine("Sort By: " + request.SortBy);
+                    Console.WriteLine("Direction: " + sortOrder);
+
+                    try
+                    {
+                        query = query.OrderBy(sortExpression);
+                        Console.WriteLine(query);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Invalid sort field '{request.SortBy}' or order '{sortOrder}'.", ex);
+                    }
+                }
+
+
 
                 var totalCount = await query.CountAsync(cancellationToken);
 
