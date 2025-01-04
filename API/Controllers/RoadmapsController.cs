@@ -2,6 +2,7 @@ using Application.RoadmapActivities;
 using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Application.DTOs;
+using Application.AuditActivities;
 
 namespace API.Controllers
 {
@@ -45,21 +46,28 @@ namespace API.Controllers
             return await Mediator.Send(new Details.Query{ Id = id});
         }
 
-        [HttpGet("logs")]
-        public async Task<ActionResult<PaginatedLogResult<RoadmapLogsDto>>> GetLogs(
-            [FromQuery] string filter,
-            [FromQuery] string search,
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10)
-        {
-            return await Mediator.Send(new GetLogs.Query
-            {
-                Filter = filter,
-                Search = search,
-                PageNumber = pageNumber,
-                PageSize = pageSize
-            });
-        }
+        //[HttpGet("logs")]
+        //public async Task<ActionResult<PaginatedLogResult<AuditLog>>> GetLogs(
+        //    [FromQuery] string filter,
+        //    [FromQuery] string search,
+        //    [FromQuery] DateTime? date,
+        //    [FromQuery] int pageNumber = 1,
+        //    [FromQuery] int pageSize = 10,
+        //    [FromQuery] string sortBy = "UpdatedAt",
+        //    [FromQuery] int asc = 1)
+
+        //{
+        //    return await Mediator.Send(new GetLogs.Query
+        //    {
+        //        Filter = filter,
+        //        Search = search,
+        //        CreatedAfter = date,
+        //        PageNumber = pageNumber,
+        //        PageSize = pageSize,
+        //        SortBy = sortBy,
+        //        Asc = asc
+        //    });
+        //}
 
         [HttpGet("details/{id}")]
         public async Task<ActionResult<RoadmapResponseDto>> GetRoadmapDetails(Guid id)

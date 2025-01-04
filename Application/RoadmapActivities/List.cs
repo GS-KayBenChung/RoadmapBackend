@@ -32,7 +32,6 @@ namespace Application.RoadmapActivities
 
                 var query = _context.Roadmaps
                     .Where(r => !r.IsDeleted)
-                    //.OrderByDescending(r => r.UpdatedAt)
                     .AsNoTracking()
                     .AsQueryable();
 

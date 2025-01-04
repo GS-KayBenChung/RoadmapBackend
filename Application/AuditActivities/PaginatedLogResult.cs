@@ -1,4 +1,5 @@
-﻿
+﻿namespace Application.AuditActivities
+{
     public class PaginatedLogResult<T>
     {
         public List<T> Items { get; set; } = new();
@@ -7,3 +8,4 @@
         public int CurrentPage { get; set; }
         public int PageSize { get; set; }
     }
+}
