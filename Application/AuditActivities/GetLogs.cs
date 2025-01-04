@@ -39,6 +39,9 @@ namespace Application.AuditActivities
                 {
                     var targetDate = request.CreatedOn.Value.Date;
 
+                    Console.WriteLine($"request.CreatedOn: {request.CreatedOn.Value}");
+                    Console.WriteLine($"targetDate: {targetDate}");
+
                     query = query.Where(r => r.CreatedAt.Date == targetDate);
                 }
 
