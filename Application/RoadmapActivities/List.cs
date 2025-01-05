@@ -40,12 +40,11 @@ namespace Application.RoadmapActivities
                     var startOfDay = request.CreatedAfter.Value.Date;
                     var endOfDay = startOfDay.AddDays(1).AddTicks(-1);
                     query = query.Where(r => r.CreatedAt >= startOfDay);
-                    Console.WriteLine($"Filtering created after: {startOfDay} to {endOfDay}");
+                    
                 }
 
                 if (!string.IsNullOrEmpty(request.Filter))
                 {
-                    Console.WriteLine($"Applying filter: {request.Filter.ToLower()}");
 
                     query = request.Filter.ToLower() switch
                     {
@@ -82,9 +81,6 @@ namespace Application.RoadmapActivities
                     string sortOrder = request.Asc == 1 ? "ascending" : "descending";
                     string sortExpression = $"{request.SortBy} {sortOrder}";
 
-                    Console.WriteLine("Sort By: " + request.SortBy);
-                    Console.WriteLine("Direction: " + sortOrder);
-
                     try
                     {
                         query = query.OrderBy(sortExpression);
@@ -95,8 +91,6 @@ namespace Application.RoadmapActivities
                         throw new Exception($"Invalid sort field '{request.SortBy}' or order '{sortOrder}'.", ex);
                     }
                 }
-
-
 
                 var totalCount = await query.CountAsync(cancellationToken);
 
@@ -123,7 +117,6 @@ namespace Application.RoadmapActivities
                 var dueDate = GetLatestTaskDueDate(roadmap);
                 if (!dueDate.HasValue)
                 {
-                    Console.WriteLine($"No due date found for roadmap {roadmap.RoadmapId}");
                     return false;
                 }
                 return dueDate.Value < DateTime.UtcNow;

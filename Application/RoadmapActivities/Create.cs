@@ -1,7 +1,12 @@
 ﻿using Application.DTOs;
 using Domain;
+using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Persistence;
+using Serilog;
+using Serilog.Context;
+using System.Text.Json;
 
 public class Create
 {
@@ -9,28 +14,30 @@ public class Create
     {
         public RoadmapDto RoadmapDto { get; set; }
     }
-
     public class Handler : IRequestHandler<Create.Command>
     {
         private readonly DataContext _context;
+        private readonly IValidator<RoadmapDto> _validator;
 
-        public Handler(DataContext context)
+        public Handler(DataContext context, IValidator<RoadmapDto> validator)
         {
             _context = context;
+            _validator = validator;
         }
 
         public async Task Handle(Create.Command request, CancellationToken cancellationToken)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(request.RoadmapDto.Title) || request.RoadmapDto.Title.Length > 50)
-                {
-                    throw new ArgumentException("Roadmap title must be between 1 and 50 characters.");
-                }
 
-                if (string.IsNullOrEmpty(request.RoadmapDto.Description) || request.RoadmapDto.Description.Length > 100)
+            var traceId = Guid.NewGuid().ToString();
+            using (LogContext.PushProperty("TraceId", traceId))
+            {
+                var validationResult = await _validator.ValidateAsync(request.RoadmapDto, cancellationToken);
+
+                if (!validationResult.IsValid)
                 {
-                    throw new ArgumentException("Roadmap description must be between 1 and 100 characters.");
+                    var errors = string.Join(", ", validationResult.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}"));
+                    Log.Error("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [ERROR] [TraceId: {TraceId}] Validation failed: {Errors}", DateTime.UtcNow, traceId, errors);
+                    throw new ApplicationException("Validation failed: " + string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)));
                 }
 
                 var roadmap = new Roadmap
@@ -45,56 +52,62 @@ public class Create
 
                 _context.Roadmaps.Add(roadmap);
 
-                foreach (var milestoneDto in request.RoadmapDto.Milestones)
+                if (request.RoadmapDto.Milestones != null && request.RoadmapDto.Milestones.Any())
                 {
-                    var milestone = new Milestone
+                    foreach (var milestoneDto in request.RoadmapDto.Milestones)
                     {
-                        RoadmapId = roadmap.RoadmapId,
-                        Name = milestoneDto.Name,
-                        Description = milestoneDto.Description,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                    };
-                    _context.Milestones.Add(milestone);
-
-                    foreach (var sectionDto in milestoneDto.Sections)
-                    {
-                        var section = new Section
+                        var milestone = new Milestone
                         {
-                            MilestoneId = milestone.MilestoneId,
-                            Name = sectionDto.Name,
-                            Description = sectionDto.Description,
+                            RoadmapId = roadmap.RoadmapId,
+                            Name = milestoneDto.Name,
+                            Description = milestoneDto.Description,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow,
                         };
-                        _context.Sections.Add(section);
+                        _context.Milestones.Add(milestone);
 
-                        foreach (var taskDto in sectionDto.Tasks)
+                        if (milestoneDto.Sections != null && milestoneDto.Sections.Any())
                         {
-                            var task = new ToDoTask
+                            foreach (var sectionDto in milestoneDto.Sections)
                             {
-                                SectionId = section.SectionId,
-                                Name = taskDto.Name,
-                                DateStart = taskDto.DateStart,
-                                DateEnd = taskDto.DateEnd,
-                                CreatedAt = DateTime.UtcNow,
-                                UpdatedAt = DateTime.UtcNow,
-                            };
-                            _context.ToDoTasks.Add(task);
+                                var section = new Section
+                                {
+                                    MilestoneId = milestone.MilestoneId,
+                                    Name = sectionDto.Name,
+                                    Description = sectionDto.Description,
+                                    CreatedAt = DateTime.UtcNow,
+                                    UpdatedAt = DateTime.UtcNow,
+                                };
+                                _context.Sections.Add(section);
+
+                                if (sectionDto.Tasks != null && sectionDto.Tasks.Any())
+                                {
+                                    foreach (var taskDto in sectionDto.Tasks)
+                                    {
+                                        var task = new ToDoTask
+                                        {
+                                            SectionId = section.SectionId,
+                                            Name = taskDto.Name,
+                                            DateStart = taskDto.DateStart,
+                                            DateEnd = taskDto.DateEnd,
+                                            CreatedAt = DateTime.UtcNow,
+                                            UpdatedAt = DateTime.UtcNow,
+                                        };
+                                        _context.ToDoTasks.Add(task);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
+                Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Created Roadmap: {Roadmap}",
+                DateTime.UtcNow,
+                traceId,
+                JsonSerializer.Serialize(roadmap, new JsonSerializerOptions { WriteIndented = true }));
 
                 await _context.SaveChangesAsync(cancellationToken);
             }
-            catch (ArgumentException ex)
-            {
-                throw new ApplicationException($"Validation error: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                throw new ApplicationException("An unexpected error occurred while creating the roadmap.");
-            }
         }
     }
+
 }

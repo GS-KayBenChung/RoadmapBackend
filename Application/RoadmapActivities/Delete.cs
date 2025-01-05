@@ -48,7 +48,7 @@ namespace Application.RoadmapActivities
                 }
                 catch (Exception ex)
                 {
-                    throw new ApplicationException("An unexpected error occurred while deleting the roadmap.");
+                    throw new ApplicationException("An unexpected error occurred while deleting the roadmap." + ex);
                 }
             }
         }

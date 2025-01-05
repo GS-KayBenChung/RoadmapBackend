@@ -3,6 +3,7 @@ using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Application.DTOs;
 using Application.AuditActivities;
+using Application.Dtos;
 
 namespace API.Controllers
 {
@@ -46,29 +47,6 @@ namespace API.Controllers
             return await Mediator.Send(new Details.Query{ Id = id});
         }
 
-        //[HttpGet("logs")]
-        //public async Task<ActionResult<PaginatedLogResult<AuditLog>>> GetLogs(
-        //    [FromQuery] string filter,
-        //    [FromQuery] string search,
-        //    [FromQuery] DateTime? date,
-        //    [FromQuery] int pageNumber = 1,
-        //    [FromQuery] int pageSize = 10,
-        //    [FromQuery] string sortBy = "UpdatedAt",
-        //    [FromQuery] int asc = 1)
-
-        //{
-        //    return await Mediator.Send(new GetLogs.Query
-        //    {
-        //        Filter = filter,
-        //        Search = search,
-        //        CreatedAfter = date,
-        //        PageNumber = pageNumber,
-        //        PageSize = pageSize,
-        //        SortBy = sortBy,
-        //        Asc = asc
-        //    });
-        //}
-
         [HttpGet("details/{id}")]
         public async Task<ActionResult<RoadmapResponseDto>> GetRoadmapDetails(Guid id)
         {
@@ -78,20 +56,33 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateRoadmap([FromBody] RoadmapDto roadmapDto)
         {
-            try
+            var validator = new RoadmapDtoValidator();
+            var validationResult = await validator.ValidateAsync(roadmapDto);
+
+            if (!validationResult.IsValid)
             {
-                var command = new Create.Command { RoadmapDto = roadmapDto };
-                await Mediator.Send(command);
-                return Ok(new { message = "Roadmap created successfully." });
+                foreach (var failure in validationResult.Errors)
+                {
+                    ModelState.AddModelError(failure.PropertyName, failure.ErrorMessage);
+                }
+
+                var errorResponse = new
+                {
+                    type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                    title = "One or more validation errors occurred.",
+                    status = 400,
+                    errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    ),
+                    traceId = HttpContext.TraceIdentifier
+                };
+
+                return BadRequest(errorResponse);
             }
-            catch (ApplicationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = "An unexpected error occurred." });
-            }
+            var command = new Create.Command { RoadmapDto = roadmapDto };
+            await Mediator.Send(command);
+            return Ok(new { message = "Roadmap created successfully." });
         }
 
         [HttpPut("{id}")]
@@ -121,7 +112,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "An unexpected error occurred while deleting the roadmap." });
+                return StatusCode(500, new { error = "An unexpected error occurred while deleting the roadmap." + ex });
             }
         }
 
