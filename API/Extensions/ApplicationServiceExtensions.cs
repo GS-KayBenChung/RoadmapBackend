@@ -2,7 +2,7 @@
 using Application.Core;
 using Application.Dtos;
 using Application.RoadmapActivities;
-using FluentValidation;
+//using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 
@@ -12,7 +12,7 @@ namespace API.Extensions
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration config)
         {
-            services.AddValidatorsFromAssemblyContaining<RoadmapDtoValidator>();
+            //services.AddValidatorsFromAssemblyContaining<RoadmapDtoValidator>();
 
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
@@ -25,8 +25,12 @@ namespace API.Extensions
             {
                 opt.AddPolicy("CorsPolicy", policy =>
                 {
-                    policy.AllowAnyHeader().AllowAnyMethod().WithOrigins(config["CorsSettings:BaseUrl"]);
+                    policy.AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .WithOrigins(config["CorsSettings:BaseUrl"])
+                          .AllowCredentials(); 
                 });
+
             });
 
             //Mediator Register all Handlers

@@ -1,6 +1,8 @@
 ﻿using Application.DTOs;
 using Domain;
 using FluentValidation;
+
+//using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Persistence;
@@ -17,28 +19,30 @@ public class Create
     public class Handler : IRequestHandler<Create.Command>
     {
         private readonly DataContext _context;
-        private readonly IValidator<RoadmapDto> _validator;
+        //private readonly IValidator<RoadmapDto> _validator;
 
-        public Handler(DataContext context, IValidator<RoadmapDto> validator)
+        //public Handler(DataContext context, IValidator<RoadmapDto> validator)
+        public Handler(DataContext context)
+
         {
             _context = context;
-            _validator = validator;
+           // _validator = validator;
         }
 
         public async Task Handle(Create.Command request, CancellationToken cancellationToken)
         {
 
-            var traceId = Guid.NewGuid().ToString();
-            using (LogContext.PushProperty("TraceId", traceId))
-            {
-                var validationResult = await _validator.ValidateAsync(request.RoadmapDto, cancellationToken);
+            //var traceId = Guid.NewGuid().ToString();
+            //using (LogContext.PushProperty("TraceId", traceId))
+            //{
+            //    var validationResult = await _validator.ValidateAsync(request.RoadmapDto, cancellationToken);
 
-                if (!validationResult.IsValid)
-                {
-                    var errors = string.Join(", ", validationResult.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}"));
-                    Log.Error("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [ERROR] [TraceId: {TraceId}] Validation failed: {Errors}", DateTime.UtcNow, traceId, errors);
-                    throw new ApplicationException("Validation failed: " + string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)));
-                }
+            //    if (!validationResult.IsValid)
+            //    {
+            //        var errors = string.Join(", ", validationResult.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}"));
+            //        Log.Error("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [ERROR] [TraceId: {TraceId}] Validation failed: {Errors}", DateTime.UtcNow, traceId, errors);
+            //        throw new ApplicationException("Validation failed: " + string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)));
+            //    }
 
                 var roadmap = new Roadmap
                 {
@@ -99,13 +103,13 @@ public class Create
                             }
                         }
                     }
-                }
-                Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Created Roadmap: {Roadmap}",
-                DateTime.UtcNow,
-                traceId,
-                JsonSerializer.Serialize(roadmap, new JsonSerializerOptions { WriteIndented = true }));
+            //}
+            //Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Created Roadmap: {Roadmap}",
+            //DateTime.UtcNow,
+            //traceId,
+            //JsonSerializer.Serialize(roadmap, new JsonSerializerOptions { WriteIndented = true }));
 
-                await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
             }
         }
     }

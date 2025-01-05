@@ -56,30 +56,30 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateRoadmap([FromBody] RoadmapDto roadmapDto)
         {
-            var validator = new RoadmapDtoValidator();
-            var validationResult = await validator.ValidateAsync(roadmapDto);
+            //var validator = new RoadmapDtoValidator();
+            //var validationResult = await validator.ValidateAsync(roadmapDto);
 
-            if (!validationResult.IsValid)
-            {
-                foreach (var failure in validationResult.Errors)
-                {
-                    ModelState.AddModelError(failure.PropertyName, failure.ErrorMessage);
-                }
+            //if (!validationResult.IsValid)
+            //{
+            //    foreach (var failure in validationResult.Errors)
+            //    {
+            //        ModelState.AddModelError(failure.PropertyName, failure.ErrorMessage);
+            //    }
 
-                var errorResponse = new
-                {
-                    type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-                    title = "One or more validation errors occurred.",
-                    status = 400,
-                    errors = ModelState.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
-                    ),
-                    traceId = HttpContext.TraceIdentifier
-                };
+            //    var errorResponse = new
+            //    {
+            //        type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+            //        title = "One or more validation errors occurred.",
+            //        status = 400,
+            //        errors = ModelState.ToDictionary(
+            //            kvp => kvp.Key,
+            //            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+            //        ),
+            //        traceId = HttpContext.TraceIdentifier
+            //    };
 
-                return BadRequest(errorResponse);
-            }
+            //    return BadRequest(errorResponse);
+            //}
             var command = new Create.Command { RoadmapDto = roadmapDto };
             await Mediator.Send(command);
             return Ok(new { message = "Roadmap created successfully." });

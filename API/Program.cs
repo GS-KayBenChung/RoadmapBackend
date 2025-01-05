@@ -14,8 +14,8 @@ using static System.Net.Mime.MediaTypeNames;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((context, services, configuration) =>
-    configuration.ReadFrom.Configuration(context.Configuration));
+//builder.Host.UseSerilog((context, services, configuration) =>
+//    configuration.ReadFrom.Configuration(context.Configuration));
 
 //NEW GOOGLEAUTH
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -36,12 +36,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddCors(options =>
+
+builder.Services.AddCors(opt =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    opt.AddPolicy("CorsPolicy", policy =>
     {
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        policy.AllowAnyHeader()
+              .AllowAnyMethod()
+              .WithOrigins("http://localhost:3000")
+              .AllowCredentials();
     });
+
 });
 
 // Moved all services to ApplicationServicesExtension file
@@ -50,15 +55,7 @@ builder.Services.AddApplicationServices(builder.Configuration);
 var app = builder.Build();
 
 // SERILOG
-app.UseSerilogRequestLogging();
-// SERILOG TraceID
-//app.Use(async (context, next) =>
-//{
-//    using (LogContext.PushProperty("TraceId", Guid.NewGuid().ToString()))
-//    {
-//        await next.Invoke();
-//    }
-//});
+//app.UseSerilogRequestLogging();
 
 //app.Use(async (context, next) =>
 //{
@@ -80,53 +77,21 @@ app.UseSerilogRequestLogging();
 
 //    await next();
 
-//    // Log Response Body
+//    // Log Response Body (Formatted JSON)
 //    context.Response.Body.Seek(0, SeekOrigin.Begin);
-//    var responseBodyText = await new StreamReader(context.Response.Body).ReadToEndAsync();
+//    var responseBodyString = await new StreamReader(context.Response.Body).ReadToEndAsync();
 //    context.Response.Body.Seek(0, SeekOrigin.Begin);
+
+//    // Pretty-print the JSON response body
+//    var responseBodyText = JsonSerializer.Serialize(
+//        JsonSerializer.Deserialize<object>(responseBodyString),
+//        new JsonSerializerOptions { WriteIndented = true }
+//    );
 
 //    Log.Information("Response Body: {ResponseBody}", responseBodyText);
+
 //    await responseBody.CopyToAsync(originalResponseBodyStream);
 //});
-app.Use(async (context, next) =>
-{
-    var traceId = Guid.NewGuid().ToString();
-    context.Items["TraceId"] = traceId;
-    LogContext.PushProperty("TraceId", traceId);
-
-    // Log Request Body
-    context.Request.EnableBuffering();
-    var requestBody = await new StreamReader(context.Request.Body).ReadToEndAsync();
-    context.Request.Body.Position = 0;
-
-    Log.Information("Request Body: {RequestBody}", requestBody);
-
-    // Capture Response
-    var originalResponseBodyStream = context.Response.Body;
-    using var responseBody = new MemoryStream();
-    context.Response.Body = responseBody;
-
-    await next();
-
-    // Log Response Body (Formatted JSON)
-    context.Response.Body.Seek(0, SeekOrigin.Begin);
-    var responseBodyString = await new StreamReader(context.Response.Body).ReadToEndAsync();
-    context.Response.Body.Seek(0, SeekOrigin.Begin);
-
-    // Pretty-print the JSON response body
-    var responseBodyText = JsonSerializer.Serialize(
-        JsonSerializer.Deserialize<object>(responseBodyString),
-        new JsonSerializerOptions { WriteIndented = true }
-    );
-
-    Log.Information("Response Body: {ResponseBody}", responseBodyText);
-
-    await responseBody.CopyToAsync(originalResponseBodyStream);
-});
-
-
-
-
 
 //app.UseMiddleware<ErrorHandlingMiddleware>();
 
@@ -143,7 +108,7 @@ if (app.Environment.IsDevelopment())
 
 //app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("CorsPolicy");
 
 app.UseAuthorization();
 app.MapControllers();
