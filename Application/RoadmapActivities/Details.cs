@@ -2,6 +2,9 @@
 using Domain;
 using MediatR;
 using Persistence;
+using Serilog;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace Application.RoadmapActivities
 {
@@ -23,8 +26,9 @@ namespace Application.RoadmapActivities
 
             public async Task<Roadmap> Handle(Details.Query request, CancellationToken cancellationToken)
             {
+               
                 var roadmap = await _context.Roadmaps.FindAsync(new object[] { request.Id }, cancellationToken);
-
+                
                 return roadmap;
             }
         }
