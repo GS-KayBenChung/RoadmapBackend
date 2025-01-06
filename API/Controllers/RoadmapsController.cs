@@ -9,6 +9,12 @@ namespace API.Controllers
 {
     public class RoadmapsController : BaseApiController
     {
+        private readonly IConfiguration _config;
+
+        public RoadmapsController(IConfiguration config)
+        {
+            _config = config;
+        }
 
         [HttpGet("dashboard")]
         public async Task<ActionResult<DashboardStats>> GetDashboardData()
@@ -22,12 +28,20 @@ namespace API.Controllers
             [FromQuery] string filter,
             [FromQuery] string search,
             [FromQuery] DateTime? date,
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10,
-            [FromQuery] string sortBy = "UpdatedAt",
-            [FromQuery] int asc = 1)
+            [FromQuery] int pageNumber,
+            [FromQuery] int pageSize,
+            [FromQuery] string sortBy,
+            [FromQuery] int asc)
 
         {
+
+            var paginationDefaults = _config.GetSection("PaginationDefaults");
+
+            pageNumber = pageNumber <= 0 ? paginationDefaults.GetValue<int>("DefaultPageNumber") : pageNumber;
+            pageSize = pageSize <= 0 ? paginationDefaults.GetValue<int>("DefaultPageSize") : pageSize;
+            sortBy = string.IsNullOrEmpty(sortBy) ? paginationDefaults.GetValue<string>("DefaultSortByRoadmap") : sortBy;
+            asc = asc == 0 ? paginationDefaults.GetValue<int>("DefaultAsc") : asc;
+
             return await Mediator.Send(new List.Query 
             {
                 Filter = filter,
@@ -86,11 +100,52 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateRoadmap(Guid id, UpdateRoadmap.Command command)
+        public async Task<IActionResult> UpdateRoadmap(Guid id, [FromBody] UpdateRoadmap.Command command)
         {
-            command.Id = id;
-            await Mediator.Send(command);
-            return NoContent();
+            var validator = new UpdateRoadmapValidator();
+            var validationResult = await validator.ValidateAsync(command);
+
+            if (!validationResult.IsValid)
+            {
+                foreach (var failure in validationResult.Errors)
+                {
+                    ModelState.AddModelError(failure.PropertyName, failure.ErrorMessage);
+                }
+
+                var errorResponse = new
+                {
+                    type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                    title = "One or more validation errors occurred.",
+                    status = 400,
+                    errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    ),
+                    traceId = HttpContext.TraceIdentifier
+                };
+
+                return BadRequest(errorResponse);
+            }
+
+            try
+            {
+                command.Id = id;
+
+                await Mediator.Send(command);
+
+                return Ok(new { message = "Roadmap updated successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                    title = "An unexpected error occurred.",
+                    status = 500,
+                    detail = ex.Message,
+                    traceId = HttpContext.TraceIdentifier
+                });
+            }
         }
 
         [HttpDelete("{id}")]

@@ -102,7 +102,7 @@ public class Create
                         }
                     }
 
-                    Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Created Roadmap: {Roadmap}",
+                    Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Create Roadmap: {Roadmap}",
                     DateTime.UtcNow,
                     traceId,
                     JsonSerializer.Serialize(roadmap, new JsonSerializerOptions

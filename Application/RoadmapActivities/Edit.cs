@@ -2,6 +2,14 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
+using Serilog;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Diagnostics;
+using FluentValidation;
 
 namespace Application.RoadmapActivities
 {
@@ -33,9 +41,10 @@ namespace Application.RoadmapActivities
                     .ThenInclude(s => s.ToDoTasks)
                     .FirstOrDefaultAsync(r => r.RoadmapId == request.Id, cancellationToken);
 
+               
                 if (roadmap == null)
                 {
-                    throw new Exception("Roadmap not found");
+                    throw new InvalidOperationException($"No Roadmap with that Id'{request.Id}'.");
                 }
 
                 roadmap.Title = request.Title;
@@ -82,7 +91,7 @@ namespace Application.RoadmapActivities
                 try
                 {
                     var success = await _context.SaveChangesAsync(cancellationToken);
-               
+
                     if (success <= 0) throw new Exception("Failed to update roadmap");
                 }
                 catch (DbUpdateException ex)

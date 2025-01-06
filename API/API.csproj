@@ -40,4 +40,8 @@
     <Folder Include="Services\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="C:\Users\GoSaaS Malaysia PC03\Desktop\complete20250106.log" Link="complete20250106.log" />
+  </ItemGroup>
+
 </Project>

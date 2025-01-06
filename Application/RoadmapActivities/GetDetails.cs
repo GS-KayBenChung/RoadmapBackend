@@ -2,6 +2,10 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
+using Serilog;
+using System.Diagnostics;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace Application.RoadmapActivities
 {
@@ -74,6 +78,16 @@ namespace Application.RoadmapActivities
                         }).ToList()
                     }).ToList()
                 };
+                var traceId = Guid.NewGuid().ToString();
+                var roadmapJson = JsonSerializer.Serialize(roadmap, new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.Preserve,
+                    WriteIndented = true
+                });
+                Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Get Roadmap: {Roadmap}",
+                DateTime.UtcNow,
+                traceId,
+                roadmapJson);
 
                 return response;
             }

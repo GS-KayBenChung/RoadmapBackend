@@ -95,8 +95,8 @@ namespace Application.Users
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                     new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()) 
                 };
-
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("t2mDUxBTjq3NE7VS85uwRrKeTPj-EfhMAoD7Btc1HHY="));
+  
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
                 var token = new JwtSecurityToken(

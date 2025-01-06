@@ -2,7 +2,11 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
+using Serilog;
+using System.Diagnostics;
 using System.Linq.Dynamic.Core;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace Application.RoadmapActivities
 {
@@ -29,6 +33,7 @@ namespace Application.RoadmapActivities
 
             public async Task<PaginatedRoadmapResult<Roadmap>> Handle(Query request, CancellationToken cancellationToken)
             {
+                var traceId = Guid.NewGuid().ToString();
 
                 var query = _context.Roadmaps
                     .Where(r => !r.IsDeleted)
@@ -81,6 +86,8 @@ namespace Application.RoadmapActivities
                     string sortOrder = request.Asc == 1 ? "ascending" : "descending";
                     string sortExpression = $"{request.SortBy} {sortOrder}";
 
+                    Console.WriteLine(sortOrder+ sortExpression);
+
                     try
                     {
                         query = query.OrderBy(sortExpression);
@@ -99,6 +106,15 @@ namespace Application.RoadmapActivities
                     .Skip((request.PageNumber - 1) * request.PageSize)
                     .Take(request.PageSize)
                     .ToListAsync(cancellationToken);
+
+                Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Get Roadmap: {Roadmap}",
+                DateTime.UtcNow,
+                traceId,
+                JsonSerializer.Serialize(roadmaps, new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    ReferenceHandler = ReferenceHandler.Preserve
+                }));
 
                 var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
 
