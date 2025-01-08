@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Application.DTOs;
 using Application.AuditActivities;
 using Application.Dtos;
+using System.Security.Claims;
+using Application.Dto;
 
 namespace API.Controllers
 {
@@ -34,6 +36,12 @@ namespace API.Controllers
             [FromQuery] int asc)
 
         {
+            //var userIdFormatted = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            //if (!Guid.TryParse(userIdFormatted, out Guid userId))
+            //{
+            //    return Unauthorized("Unauthorized User");
+            //}
 
             var paginationDefaults = _config.GetSection("PaginationDefaults");
 
@@ -55,11 +63,11 @@ namespace API.Controllers
         }
 
 
-        [HttpGet("{id}")] 
-        public async Task<ActionResult<Roadmap>> GetRoadmap(Guid id)
-        {
-            return await Mediator.Send(new Details.Query{ Id = id});
-        }
+        //[HttpGet("{id}")] 
+        //public async Task<ActionResult<Roadmap>> GetRoadmap(Guid id)
+        //{
+        //    return await Mediator.Send(new Details.Query{ Id = id});
+        //}
 
         [HttpGet("details/{id}")]
         public async Task<ActionResult<RoadmapResponseDto>> GetRoadmapDetails(Guid id)
@@ -95,8 +103,8 @@ namespace API.Controllers
                 return BadRequest(errorResponse);
             }
             var command = new Create.Command { RoadmapDto = roadmapDto };
-            await Mediator.Send(command);
-            return Ok(new { message = "Roadmap created successfully." });
+            StatusDto status = await Mediator.Send(command);
+            return Ok(status);
         }
 
         [HttpPut("{id}")]

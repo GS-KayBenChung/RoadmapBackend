@@ -52,12 +52,15 @@ builder.Services.AddCors(opt =>
 // Moved all services to ApplicationServicesExtension file
 builder.Services.AddApplicationServices(builder.Configuration);
 
+builder.Services.AddHostedService<GracefulShutdownService>();
+builder.Services.AddHostedService<PostgresMonitorService>();
+
 var app = builder.Build();
 
 // SERILOG
 app.UseSerilogRequestLogging();
 
-//app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Use Authentication Middleware
 app.UseAuthentication();

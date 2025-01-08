@@ -22,30 +22,37 @@ namespace API.ErrorHandling
             {
                 await _next(httpContext);
             }
+            catch (ConflictException ex)
+            {
+                _logger.LogError(ex, "Conflict Error occurred");
+                httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+                await httpContext.Response.WriteAsJsonAsync(new { message = ex.Message });
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An unexpected error occurred.");
-                await HandleExceptionAsync(httpContext, ex);
+                _logger.LogError(ex, "An unexpected error occurred");
+                httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                await httpContext.Response.WriteAsJsonAsync(new { message = "An unexpected error occurred" });
             }
         }
 
-        private Task HandleExceptionAsync(HttpContext context, Exception exception)
-        {
-            context.Response.ContentType = "application/json";
-            var statusCode = HttpStatusCode.InternalServerError;
-            var message = "An unexpected error occurred.";
+        //private Task HandleExceptionAsync(HttpContext context, Exception exception)
+        //{
+        //    context.Response.ContentType = "application/json";
+        //    var statusCode = HttpStatusCode.InternalServerError;
+        //    var message = "An unexpected error occurred.";
 
-            if (exception is ApplicationException appEx)
-            {
-                message = appEx.Message;
-                statusCode = HttpStatusCode.BadRequest;
-            }
+        //    if (exception is ApplicationException appEx)
+        //    {
+        //        message = appEx.Message;
+        //        statusCode = HttpStatusCode.BadRequest;
+        //    }
 
-            context.Response.StatusCode = (int)statusCode;
+        //    context.Response.StatusCode = (int)statusCode;
 
-            var result = JsonConvert.SerializeObject(new { error = message });
-            return context.Response.WriteAsync(result);
-        }
+        //    var result = JsonConvert.SerializeObject(new { error = message });
+        //    return context.Response.WriteAsync(result);
+        //}
     }
 
 }

@@ -38,6 +38,11 @@ namespace API.Extensions
             //Mapping Profiles
             services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
+            //Check DB Connection
+                services.AddHealthChecks()
+                    .AddCheck<PostgresHealthCheck>("postgres", tags: new[] { "db", "postgres" });
+
+
             return services;
         }
     }

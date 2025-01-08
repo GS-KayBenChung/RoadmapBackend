@@ -14,8 +14,8 @@ namespace Application.AuditActivities
             public string Filter { get; set; }
             public string Search { get; set; }
             public DateTime? CreatedOn { get; set; }
-            public int PageNumber { get; set; } = 1;
-            public int PageSize { get; set; } = 10;
+            public int PageNumber { get; set; }
+            public int PageSize { get; set; }
             public string SortBy { get; set; }
             public int Asc { get; set; }
         }
@@ -38,10 +38,6 @@ namespace Application.AuditActivities
                 if (request.CreatedOn.HasValue)
                 {
                     var targetDate = request.CreatedOn.Value.Date;
-
-                    Console.WriteLine($"request.CreatedOn: {request.CreatedOn.Value}");
-                    Console.WriteLine($"targetDate: {targetDate}");
-
                     query = query.Where(r => r.CreatedAt.Date == targetDate);
                 }
 
@@ -73,6 +69,7 @@ namespace Application.AuditActivities
 
                 if (!string.IsNullOrEmpty(request.SortBy))
                 {
+
                     var allowedSortFields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                     {
                         { "activityaction", "ActivityAction" },

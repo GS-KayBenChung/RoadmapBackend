@@ -1,8 +1,10 @@
-﻿using Application.DTOs;
+﻿using Application.Dto;
+using Application.DTOs;
 using Domain;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Persistence;
 using Serilog;
 using Serilog.Context;
@@ -11,24 +13,22 @@ using System.Text.Json.Serialization;
 
 public class Create
 {
-    public class Command : IRequest
+    public class Command : IRequest<StatusDto>
     {
         public RoadmapDto RoadmapDto { get; set; }
     }
-    public class Handler : IRequestHandler<Create.Command>
+    public class Handler : IRequestHandler<Create.Command, StatusDto>
     {
         private readonly DataContext _context;
         private readonly IValidator<RoadmapDto> _validator;
 
         public Handler(DataContext context, IValidator<RoadmapDto> validator)
-        //public Handler(DataContext context)
-
         {
             _context = context;
             _validator = validator;
         }
 
-        public async Task Handle(Create.Command request, CancellationToken cancellationToken)
+        public async Task<StatusDto> Handle(Create.Command request, CancellationToken cancellationToken)
         {
 
             var traceId = Guid.NewGuid().ToString();
@@ -42,19 +42,30 @@ public class Create
                 throw new ApplicationException("Validation failed: " + string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)));
             }
 
-            var roadmap = new Roadmap
+            var existingRoadmap = await _context.Roadmaps.FirstOrDefaultAsync(r => r.Title == request.RoadmapDto.Title && !r.IsDeleted, cancellationToken);
+
+            if (existingRoadmap != null)
+            {
+                return new StatusDto
                 {
-                    Title = request.RoadmapDto.Title,
-                    Description = request.RoadmapDto.Description,
-                    IsDraft = request.RoadmapDto.IsDraft,
-                    CreatedBy = request.RoadmapDto.CreatedBy,
-                    CreatedAt = request.RoadmapDto.CreatedAt,
-                    UpdatedAt = DateTime.UtcNow,
+                    err = $"Cannot create roadmap because roadmap with title '{request.RoadmapDto.Title}' already exists in the database.",
+                    status = "401"
                 };
+            }
+
+            var roadmap = new Roadmap
+            {
+                Title = request.RoadmapDto.Title,
+                Description = request.RoadmapDto.Description,
+                IsDraft = request.RoadmapDto.IsDraft,
+                CreatedBy = request.RoadmapDto.CreatedBy,
+                CreatedAt = request.RoadmapDto.CreatedAt,
+                UpdatedAt = DateTime.UtcNow,
+            };
 
                 _context.Roadmaps.Add(roadmap);
 
-                if (request.RoadmapDto.Milestones != null && request.RoadmapDto.Milestones.Any())
+                if (request.RoadmapDto.Milestones != null && request.RoadmapDto.Milestones.Count != 0)
                 {
                     foreach (var milestoneDto in request.RoadmapDto.Milestones)
                     {
@@ -68,7 +79,7 @@ public class Create
                         };
                         _context.Milestones.Add(milestone);
 
-                        if (milestoneDto.Sections != null && milestoneDto.Sections.Any())
+                        if (milestoneDto.Sections != null && milestoneDto.Sections.Count != 0)
                         {
                             foreach (var sectionDto in milestoneDto.Sections)
                             {
@@ -82,7 +93,7 @@ public class Create
                                 };
                                 _context.Sections.Add(section);
 
-                                if (sectionDto.Tasks != null && sectionDto.Tasks.Any())
+                                if (sectionDto.Tasks != null && sectionDto.Tasks.Count != 0)
                                 {
                                     foreach (var taskDto in sectionDto.Tasks)
                                     {
@@ -107,12 +118,12 @@ public class Create
                     traceId,
                     JsonSerializer.Serialize(roadmap, new JsonSerializerOptions
                     {
-                        WriteIndented = true,
                         ReferenceHandler = ReferenceHandler.Preserve
                     }));
 
-                    await _context.SaveChangesAsync(cancellationToken);
                 }
+                await _context.SaveChangesAsync(cancellationToken);
+            return new StatusDto { err = "-1", status = "alsjdfajklsdf" };
         }
     }
 

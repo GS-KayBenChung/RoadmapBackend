@@ -96,7 +96,6 @@ namespace Application.RoadmapActivities
                 }
                 catch (DbUpdateException ex)
                 {
-                    Console.WriteLine("error" + ex);
                 }
             }
 

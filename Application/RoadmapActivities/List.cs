@@ -17,8 +17,8 @@ namespace Application.RoadmapActivities
             public string Filter { get; set; }
             public string Search { get; set; }
             public DateTime? CreatedAfter { get; set; }
-            public int PageNumber { get; set; } = 1;
-            public int PageSize { get; set; } = 10;
+            public int PageNumber { get; set; }
+            public int PageSize { get; set; }
             public string SortBy { get; set; } 
             public int Asc { get; set; } 
         }
@@ -86,12 +86,9 @@ namespace Application.RoadmapActivities
                     string sortOrder = request.Asc == 1 ? "ascending" : "descending";
                     string sortExpression = $"{request.SortBy} {sortOrder}";
 
-                    Console.WriteLine(sortOrder+ sortExpression);
-
                     try
                     {
                         query = query.OrderBy(sortExpression);
-                        Console.WriteLine(query);
                     }
                     catch (Exception ex)
                     {
@@ -112,7 +109,6 @@ namespace Application.RoadmapActivities
                 traceId,
                 JsonSerializer.Serialize(roadmaps, new JsonSerializerOptions
                 {
-                    WriteIndented = true,
                     ReferenceHandler = ReferenceHandler.Preserve
                 }));
 

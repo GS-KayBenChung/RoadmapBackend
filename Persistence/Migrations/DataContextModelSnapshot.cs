@@ -117,14 +117,9 @@ namespace Persistence.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("UserRoadmapUserId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("RoadmapId");
 
                     b.HasIndex("CreatedBy");
-
-                    b.HasIndex("UserRoadmapUserId");
 
                     b.ToTable("Roadmaps");
                 });
@@ -248,14 +243,10 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Roadmap", b =>
                 {
                     b.HasOne("Domain.UserRoadmap", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.UserRoadmap", null)
                         .WithMany("Roadmaps")
-                        .HasForeignKey("UserRoadmapUserId");
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("CreatedByUser");
                 });

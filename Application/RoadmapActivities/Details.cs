@@ -35,7 +35,6 @@ namespace Application.RoadmapActivities
                 var roadmapJson = JsonSerializer.Serialize(roadmap, new JsonSerializerOptions
                 {
                     ReferenceHandler = ReferenceHandler.Preserve, 
-                    WriteIndented = true 
                 });
                 Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Get Roadmap: {Roadmap}",
                 DateTime.UtcNow,
