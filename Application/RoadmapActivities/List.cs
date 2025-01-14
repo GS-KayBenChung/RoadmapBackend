@@ -54,6 +54,7 @@ namespace Application.RoadmapActivities
                     query = request.Filter.ToLower() switch
                     {
                         "draft" => query.Where(r => r.IsDraft),
+                        "published" => query.Where(r => !r.IsDraft),
                         "completed" => query.Where(r => r.IsCompleted),
                         "neardue" => query.Where(r =>
                             r.Milestones.SelectMany(m => m.Sections)

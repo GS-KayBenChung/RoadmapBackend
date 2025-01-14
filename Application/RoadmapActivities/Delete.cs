@@ -1,23 +1,20 @@
-﻿using AutoMapper;
-using Domain;
+﻿using Application.Dto;
+using Domain.Dtos;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Persistence;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Serilog;
 
 namespace Application.RoadmapActivities
 {
     public class Delete
     {
-        public class Command : IRequest
+        public class Command : IRequest<StatusDto>
         {
             public Guid Id { get; set; }
         }
 
-        public class Handler : IRequestHandler<Command>
+        public class Handler : IRequestHandler<Command, StatusDto>
         {
             private readonly DataContext _context;
 
@@ -25,31 +22,57 @@ namespace Application.RoadmapActivities
             {
                 _context = context;
             }
-            public async Task Handle(Command request, CancellationToken cancellationToken)
+
+            public async Task<StatusDto> Handle(Command request, CancellationToken cancellationToken)
             {
-                try
-                {
-                    var roadmap = await _context.Roadmaps.FindAsync(request.Id);
+                var traceId = Guid.NewGuid().ToString();
 
-                    if (roadmap == null)
+                Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Started deleting roadmap with ID: {RoadmapId}",
+                    DateTime.UtcNow, traceId, request.Id);
+
+                var roadmap = await _context.Roadmaps
+                    .Include(r => r.Milestones)
+                        .ThenInclude(m => m.Sections)
+                            .ThenInclude(s => s.ToDoTasks)
+                    .FirstOrDefaultAsync(r => r.RoadmapId == request.Id, cancellationToken);
+
+                if (roadmap == null || roadmap.IsDeleted == true)
+                {
+                    Log.Warning("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [WARNING] [TraceId: {TraceId}] Roadmap with ID: {RoadmapId} not found or already deleted.",
+                        DateTime.UtcNow, traceId, request.Id);
+
+                    return new StatusDto
                     {
-                        throw new KeyNotFoundException("Roadmap not found.");
-                    }
-           
-                    roadmap.IsDeleted = true;
-            
-                    _context.Roadmaps.Update(roadmap);
+                        err = $"Cannot delete roadmap because roadmap with this ID does not exist in the database.",
+                        status = "401"
+                    };
+                }
 
-                    await _context.SaveChangesAsync(cancellationToken);
-                }
-                catch (KeyNotFoundException ex)
+                roadmap.IsDeleted = true;
+
+                foreach (var milestone in roadmap.Milestones)
                 {
-                    throw new ApplicationException($"Error: {ex.Message}");
+                    milestone.IsDeleted = true;
+
+                    foreach (var section in milestone.Sections)
+                    {
+                        section.IsDeleted = true;
+
+                        foreach (var task in section.ToDoTasks)
+                        {
+                            task.IsDeleted = true;
+                        }
+                    }
                 }
-                catch (Exception ex)
-                {
-                    throw new ApplicationException("An unexpected error occurred while deleting the roadmap." + ex);
-                }
+
+                _context.Roadmaps.Update(roadmap);
+
+                await _context.SaveChangesAsync(cancellationToken);
+
+                Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Successfully deleted roadmap with ID: {RoadmapId}",
+                    DateTime.UtcNow, traceId, request.Id);
+
+                return new StatusDto { err = "None", status = "Success" };
             }
         }
     }

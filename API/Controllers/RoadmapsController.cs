@@ -6,6 +6,11 @@ using Application.AuditActivities;
 using Application.Dtos;
 using System.Security.Claims;
 using Application.Dto;
+using Domain.Dtos;
+using Microsoft.AspNetCore.JsonPatch;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Policy;
 
 namespace API.Controllers
 {
@@ -19,7 +24,7 @@ namespace API.Controllers
         }
 
         [HttpGet("dashboard")]
-        public async Task<ActionResult<DashboardStats>> GetDashboardData()
+        public async Task<ActionResult<DashboardStatsDto>> GetDashboardData()
         {
             var response = await Mediator.Send(new DashboardList.Query());
             return Ok(response); 
@@ -62,13 +67,6 @@ namespace API.Controllers
             });
         }
 
-
-        //[HttpGet("{id}")] 
-        //public async Task<ActionResult<Roadmap>> GetRoadmap(Guid id)
-        //{
-        //    return await Mediator.Send(new Details.Query{ Id = id});
-        //}
-
         [HttpGet("details/{id}")]
         public async Task<ActionResult<RoadmapResponseDto>> GetRoadmapDetails(Guid id)
         {
@@ -107,76 +105,111 @@ namespace API.Controllers
             return Ok(status);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateRoadmap(Guid id, [FromBody] UpdateRoadmap.Command command)
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> UpdateRoadmap(Guid id, [FromBody] UpdateRoadmap.Command command)
+        //{
+        //    var validator = new UpdateRoadmapValidator();
+        //    var validationResult = await validator.ValidateAsync(command);
+
+        //    if (!validationResult.IsValid)
+        //    {
+        //        foreach (var failure in validationResult.Errors)
+        //        {
+        //            ModelState.AddModelError(failure.PropertyName, failure.ErrorMessage);
+        //        }
+
+        //        var errorResponse = new
+        //        {
+        //            type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        //            title = "One or more validation errors occurred.",
+        //            status = 400,
+        //            errors = ModelState.ToDictionary(
+        //                kvp => kvp.Key,
+        //                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+        //            ),
+        //            traceId = HttpContext.TraceIdentifier
+        //        };
+
+        //        return BadRequest(errorResponse);
+        //    }
+
+        //    try
+        //    {
+        //        command.Id = id;
+
+        //        await Mediator.Send(command);
+
+        //        return Ok(new { message = "Roadmap updated successfully." });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new
+        //        {
+        //            type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        //            title = "An unexpected error occurred.",
+        //            status = 500,
+        //            detail = ex.Message,
+        //            traceId = HttpContext.TraceIdentifier
+        //        });
+        //    }
+        //}
+
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> UpdateRoadmap(Guid id, [FromBody] JsonPatchDocument<Edit.Command> patchDocument)
         {
-            var validator = new UpdateRoadmapValidator();
-            var validationResult = await validator.ValidateAsync(command);
-
-            if (!validationResult.IsValid)
+            if (patchDocument == null)
             {
-                foreach (var failure in validationResult.Errors)
-                {
-                    ModelState.AddModelError(failure.PropertyName, failure.ErrorMessage);
-                }
-
-                var errorResponse = new
-                {
-                    type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-                    title = "One or more validation errors occurred.",
-                    status = 400,
-                    errors = ModelState.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
-                    ),
-                    traceId = HttpContext.TraceIdentifier
-                };
-
-                return BadRequest(errorResponse);
+                return BadRequest(new { message = "Invalid patch document." });
             }
 
-            try
-            {
-                command.Id = id;
+            Console.WriteLine($"Patch Doc From Body: {JsonSerializer.Serialize(patchDocument)}");
 
-                await Mediator.Send(command);
 
-                return Ok(new { message = "Roadmap updated successfully." });
-            }
-            catch (Exception ex)
+            var roadmap = await Mediator.Send(new GetDetails.Query { Id = id });
+
+            if (roadmap == null)
             {
-                return StatusCode(500, new
-                {
-                    type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-                    title = "An unexpected error occurred.",
-                    status = 500,
-                    detail = ex.Message,
-                    traceId = HttpContext.TraceIdentifier
-                });
+                return NotFound(new { message = $"Roadmap with ID '{id}' not found." });
             }
+
+            var updateCommand = new Edit.Command
+            {
+                Id = id,
+                Title = roadmap.Title,
+                Description = roadmap.Description,
+                IsDraft = roadmap.IsDraft,
+                Milestones = roadmap.Milestones
+            };
+
+
+            Console.WriteLine($"Update Command Before: {JsonSerializer.Serialize(updateCommand)}");
+
+            patchDocument.ApplyTo(updateCommand, error =>
+            {
+                Console.WriteLine($"Patch Error: {error.ErrorMessage} at {error.AffectedObject}");
+                ModelState.AddModelError(error.AffectedObject.ToString(), error.ErrorMessage);
+            });
+
+            Console.WriteLine($"Update Command After: {JsonSerializer.Serialize(updateCommand)}");
+
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            await Mediator.Send(updateCommand);
+
+            return Ok(new { message = "Roadmap updated successfully." });
         }
+
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoadmap(Guid id)
         {
-            try
-            {
-                var command = new Delete.Command { Id = id };
-                await Mediator.Send(command);
-                return Ok(new { message = "Roadmap deleted successfully." });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { error = ex.Message });
-            }
-            catch (ApplicationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = "An unexpected error occurred while deleting the roadmap." + ex });
-            }
+            var command = new Delete.Command { Id = id };
+            StatusDto status = await Mediator.Send(command);
+            return Ok(status);
         }
 
         [HttpPut("checkboxes/{id}")]
@@ -184,8 +217,18 @@ namespace API.Controllers
         {
             command.Id = id;
             await Mediator.Send(command);
-            return NoContent();
+            return Ok();
         }
+
+        [HttpPatch("{id}/publish")]
+        public async Task<IActionResult> PublishRoadmap(Guid id)
+        {
+            var command = new Publish.Command { Id = id };
+            StatusDto status = await Mediator.Send(command);
+            return Ok(status);
+        }
+
+
 
 
     }

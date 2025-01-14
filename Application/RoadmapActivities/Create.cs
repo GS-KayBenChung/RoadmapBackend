@@ -1,6 +1,7 @@
-﻿using Application.Dto;
+﻿
 using Application.DTOs;
 using Domain;
+using Domain.Dtos;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;

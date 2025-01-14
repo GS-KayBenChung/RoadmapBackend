@@ -21,7 +21,6 @@ public class PostgresMonitorService : BackgroundService
 
             if (report.Status == HealthStatus.Unhealthy)
             {
-                Console.WriteLine("Postgres is down. Initiating shutdown...");
                 _applicationLifetime.StopApplication();
                 break;
             }

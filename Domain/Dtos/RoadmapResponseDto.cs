@@ -24,6 +24,7 @@
         public string Description { get; set; }
         public float MilestoneProgress { get; set; }
         public bool IsCompleted { get; set; }
+        public bool IsDeleted { get; set; }
         public List<SectionResponseDto> Sections { get; set; }
     }
 
@@ -34,6 +35,7 @@
         public string Name { get; set; }
         public string Description { get; set; }
         public bool IsCompleted { get; set; }
+        public bool IsDeleted { get; set; }
         public List<TaskResponseDto> Tasks { get; set; }
     }
 
@@ -45,5 +47,6 @@
         public DateTime DateStart { get; set; }
         public DateTime DateEnd { get; set; }
         public bool IsCompleted { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }

@@ -28,9 +28,9 @@ namespace Application.RoadmapActivities
             public async Task<RoadmapResponseDto> Handle(Query request, CancellationToken cancellationToken)
             {
                 var roadmap = await _context.Roadmaps
-                    .Include(r => r.Milestones)
-                        .ThenInclude(m => m.Sections)
-                            .ThenInclude(s => s.ToDoTasks)
+                    .Include(r => r.Milestones.Where(m => !m.IsDeleted))
+                        .ThenInclude(m => m.Sections.Where(s => !s.IsDeleted))
+                            .ThenInclude(s => s.ToDoTasks.Where(t => !t.IsDeleted))
                     .FirstOrDefaultAsync(r => r.RoadmapId == request.Id, cancellationToken);
 
                 if (roadmap == null)
@@ -66,7 +66,10 @@ namespace Application.RoadmapActivities
                             Name = s.Name,
                             Description = s.Description,
                             IsCompleted = s.IsCompleted,
-                            Tasks = s.ToDoTasks.Select(t => new TaskResponseDto
+                            Tasks = s.ToDoTasks
+                            .OrderBy(t => t.DateStart)  
+                            .ThenBy(t => t.TaskId)    
+                            .Select(t => new TaskResponseDto
                             {
                                 TaskId = t.TaskId,
                                 SectionId = t.SectionId,
@@ -75,6 +78,15 @@ namespace Application.RoadmapActivities
                                 DateEnd = t.DateEnd,
                                 IsCompleted = t.IsCompleted
                             }).ToList()
+                            //Tasks = s.ToDoTasks.Select(t => new TaskResponseDto
+                            //{
+                            //    TaskId = t.TaskId,
+                            //    SectionId = t.SectionId,
+                            //    Name = t.Name,
+                            //    DateStart = t.DateStart,
+                            //    DateEnd = t.DateEnd,
+                            //    IsCompleted = t.IsCompleted
+                            //}).ToList()
                         }).ToList()
                     }).ToList()
                 };

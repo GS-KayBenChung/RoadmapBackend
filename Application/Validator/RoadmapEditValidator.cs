@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace Application.Dtos
 {
-    public class UpdateRoadmapValidator : AbstractValidator<UpdateRoadmap.Command>
+    public class UpdateRoadmapValidator : AbstractValidator<Edit.Command>
     {
         public UpdateRoadmapValidator()
         {
