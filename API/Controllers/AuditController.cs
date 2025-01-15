@@ -1,6 +1,6 @@
 
 using Application.AuditActivities;
-using Application.DTOs;
+using Domain.Dtos;
 using Domain;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

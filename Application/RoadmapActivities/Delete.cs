@@ -1,5 +1,4 @@
-﻿using Application.Dto;
-using Domain.Dtos;
+﻿using Domain.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence;

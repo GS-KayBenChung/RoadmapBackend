@@ -1,4 +1,4 @@
-using Application.DTOs;
+using Domain.Dtos;
 using Domain;
 using Persistence;
 

@@ -1,4 +1,4 @@
-﻿namespace Application.DTOs
+﻿namespace Domain.Dtos
 {
     public class RoadmapResponseDto
     {

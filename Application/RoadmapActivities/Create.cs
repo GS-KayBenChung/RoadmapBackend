@@ -1,14 +1,10 @@
-﻿
-using Application.DTOs;
-using Domain;
+﻿using Domain;
 using Domain.Dtos;
 using FluentValidation;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 using Serilog;
-using Serilog.Context;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 

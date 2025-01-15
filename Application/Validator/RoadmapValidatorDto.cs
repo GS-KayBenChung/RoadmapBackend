@@ -1,7 +1,7 @@
-﻿using Application.DTOs;
+﻿using Domain.Dtos;
 using FluentValidation;
 
-namespace Application.Dtos
+namespace Application.Validator
 {
     public class RoadmapValidatorDto : AbstractValidator<RoadmapDto>
     {

@@ -1,16 +1,11 @@
 using Application.RoadmapActivities;
 using Domain;
 using Microsoft.AspNetCore.Mvc;
-using Application.DTOs;
-using Application.AuditActivities;
-using Application.Dtos;
-using System.Security.Claims;
-using Application.Dto;
 using Domain.Dtos;
 using Microsoft.AspNetCore.JsonPatch;
 using System.Text.Json;
+using Application.Validator;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Policy;
 
 namespace API.Controllers
 {
@@ -154,56 +149,7 @@ namespace API.Controllers
         //    }
         //}
 
-        [HttpPatch("{id}")]
-        public async Task<IActionResult> UpdateRoadmap(Guid id, [FromBody] JsonPatchDocument<Edit.Command> patchDocument)
-        {
-            if (patchDocument == null)
-            {
-                return BadRequest(new { message = "Invalid patch document." });
-            }
-
-            Console.WriteLine($"Patch Doc From Body: {JsonSerializer.Serialize(patchDocument)}");
-
-
-            var roadmap = await Mediator.Send(new GetDetails.Query { Id = id });
-
-            if (roadmap == null)
-            {
-                return NotFound(new { message = $"Roadmap with ID '{id}' not found." });
-            }
-
-            var updateCommand = new Edit.Command
-            {
-                Id = id,
-                Title = roadmap.Title,
-                Description = roadmap.Description,
-                IsDraft = roadmap.IsDraft,
-                Milestones = roadmap.Milestones
-            };
-
-
-            Console.WriteLine($"Update Command Before: {JsonSerializer.Serialize(updateCommand)}");
-
-            patchDocument.ApplyTo(updateCommand, error =>
-            {
-                Console.WriteLine($"Patch Error: {error.ErrorMessage} at {error.AffectedObject}");
-                ModelState.AddModelError(error.AffectedObject.ToString(), error.ErrorMessage);
-            });
-
-            Console.WriteLine($"Update Command After: {JsonSerializer.Serialize(updateCommand)}");
-
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            await Mediator.Send(updateCommand);
-
-            return Ok(new { message = "Roadmap updated successfully." });
-        }
-
-
+        
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoadmap(Guid id)
         {
@@ -228,6 +174,30 @@ namespace API.Controllers
             return Ok(status);
         }
 
+        [HttpPatch("{id}/roadmap")]
+        public async Task<IActionResult> PatchRoadmap(Guid id, [FromBody] RoadmapUpdateDto updateDto)
+        {
+
+            Console.WriteLine("Controller: ");
+            if (updateDto == null)
+            {
+                return BadRequest("Invalid update payload.");
+            }
+
+            try
+            {
+                await Mediator.Send(new PatchRoadmap.Command { RoadmapId = id, UpdateDto = updateDto });
+                return Ok(new { message = "Roadmap and related entities updated successfully." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"An error occurred: {ex.Message}" });
+            }
+        }
 
 
 

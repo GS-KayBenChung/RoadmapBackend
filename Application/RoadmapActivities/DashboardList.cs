@@ -1,5 +1,4 @@
-﻿using Application.Dtos;
-using Domain;
+﻿using Domain;
 using Domain.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

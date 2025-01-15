@@ -1,7 +1,8 @@
 
 using Application.Core;
-using Application.Dtos;
+
 using Application.RoadmapActivities;
+using Application.Validator;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
