@@ -64,11 +64,13 @@ namespace Application.RoadmapActivities
                     {
                         if (dueDate.Value <= currentDate.AddDays(7) && dueDate.Value > currentDate)
                         {
-                            nearDueRoadmaps++;
+                            if(!roadmap.IsDraft)
+                                nearDueRoadmaps++;
                         }
                         if (dueDate.Value < currentDate)
                         {
-                            overdueRoadmaps++;
+                            if (!roadmap.IsDraft)
+                                overdueRoadmaps++;
                         }
                     }
                 }

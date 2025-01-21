@@ -3,6 +3,7 @@ using Domain.Dtos;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Persistence;
 using Serilog;
 using System.Text.Json;
@@ -57,12 +58,14 @@ public class Create
                 IsDraft = request.RoadmapDto.IsDraft,
                 CreatedBy = request.RoadmapDto.CreatedBy,
                 CreatedAt = request.RoadmapDto.CreatedAt,
+                OverallDuration = request.RoadmapDto.OverallDuration,
                 UpdatedAt = DateTime.UtcNow,
             };
 
                 _context.Roadmaps.Add(roadmap);
+                await _context.SaveChangesAsync(cancellationToken);
 
-                if (request.RoadmapDto.Milestones != null && request.RoadmapDto.Milestones.Count != 0)
+            if (request.RoadmapDto.Milestones != null && request.RoadmapDto.Milestones.Count != 0)
                 {
                     foreach (var milestoneDto in request.RoadmapDto.Milestones)
                     {
@@ -75,6 +78,8 @@ public class Create
                             UpdatedAt = DateTime.UtcNow,
                         };
                         _context.Milestones.Add(milestone);
+                        await _context.SaveChangesAsync(cancellationToken); // Save milestone to generate ID
+                        await Task.Delay(200, cancellationToken);
 
                         if (milestoneDto.Sections != null && milestoneDto.Sections.Count != 0)
                         {
@@ -89,22 +94,26 @@ public class Create
                                     UpdatedAt = DateTime.UtcNow,
                                 };
                                 _context.Sections.Add(section);
+                                await _context.SaveChangesAsync(cancellationToken);
+                                await Task.Delay(200, cancellationToken);
 
                                 if (sectionDto.Tasks != null && sectionDto.Tasks.Count != 0)
                                 {
-                                    foreach (var taskDto in sectionDto.Tasks)
-                                    {
-                                        var task = new ToDoTask
+                                        foreach (var taskDto in sectionDto.Tasks)
                                         {
-                                            SectionId = section.SectionId,
-                                            Name = taskDto.Name,
-                                            DateStart = taskDto.DateStart,
-                                            DateEnd = taskDto.DateEnd,
-                                            CreatedAt = DateTime.UtcNow,
-                                            UpdatedAt = DateTime.UtcNow,
-                                        };
-                                        _context.ToDoTasks.Add(task);
-                                    }
+                                            var task = new ToDoTask
+                                            {
+                                                SectionId = section.SectionId,
+                                                Name = taskDto.Name,
+                                                DateStart = taskDto.DateStart,
+                                                DateEnd = taskDto.DateEnd,
+                                                CreatedAt = DateTime.UtcNow,
+                                                UpdatedAt = DateTime.UtcNow,
+                                            };
+                                            _context.ToDoTasks.Add(task);
+                                            await _context.SaveChangesAsync(cancellationToken);
+                                            await Task.Delay(200, cancellationToken);
+                                        }
                                 }
                             }
                         }
@@ -113,7 +122,7 @@ public class Create
                     Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Create Roadmap: {Roadmap}",
                     DateTime.UtcNow,
                     traceId,
-                    JsonSerializer.Serialize(roadmap, new JsonSerializerOptions
+                    System.Text.Json.JsonSerializer.Serialize(roadmap, new JsonSerializerOptions
                     {
                         ReferenceHandler = ReferenceHandler.Preserve
                     }));

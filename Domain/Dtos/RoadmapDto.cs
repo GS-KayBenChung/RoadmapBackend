@@ -22,6 +22,8 @@ namespace Domain.Dtos
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public int OverallDuration  { get; set; }
+
         public List<MilestoneDto> Milestones { get; set; }
     }
 
