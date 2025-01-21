@@ -36,13 +36,6 @@ namespace API.Controllers
             [FromQuery] int asc)
 
         {
-            //var userIdFormatted = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            //if (!Guid.TryParse(userIdFormatted, out Guid userId))
-            //{
-            //    return Unauthorized("Unauthorized User");
-            //}
-
             var paginationDefaults = _config.GetSection("PaginationDefaults");
 
             pageNumber = pageNumber <= 0 ? paginationDefaults.GetValue<int>("DefaultPageNumber") : pageNumber;
@@ -99,71 +92,13 @@ namespace API.Controllers
             StatusDto status = await Mediator.Send(command);
             return Ok(status);
         }
-
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> UpdateRoadmap(Guid id, [FromBody] UpdateRoadmap.Command command)
-        //{
-        //    var validator = new UpdateRoadmapValidator();
-        //    var validationResult = await validator.ValidateAsync(command);
-
-        //    if (!validationResult.IsValid)
-        //    {
-        //        foreach (var failure in validationResult.Errors)
-        //        {
-        //            ModelState.AddModelError(failure.PropertyName, failure.ErrorMessage);
-        //        }
-
-        //        var errorResponse = new
-        //        {
-        //            type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-        //            title = "One or more validation errors occurred.",
-        //            status = 400,
-        //            errors = ModelState.ToDictionary(
-        //                kvp => kvp.Key,
-        //                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
-        //            ),
-        //            traceId = HttpContext.TraceIdentifier
-        //        };
-
-        //        return BadRequest(errorResponse);
-        //    }
-
-        //    try
-        //    {
-        //        command.Id = id;
-
-        //        await Mediator.Send(command);
-
-        //        return Ok(new { message = "Roadmap updated successfully." });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new
-        //        {
-        //            type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-        //            title = "An unexpected error occurred.",
-        //            status = 500,
-        //            detail = ex.Message,
-        //            traceId = HttpContext.TraceIdentifier
-        //        });
-        //    }
-        //}
-
-        
+      
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoadmap(Guid id)
         {
             var command = new Delete.Command { Id = id };
             StatusDto status = await Mediator.Send(command);
             return Ok(status);
-        }
-
-        [HttpPut("checkboxes/{id}")]
-        public async Task<IActionResult> UpdateCheckboxes(Guid id, [FromBody] UpdateCheckedBoxes.Command command)
-        {
-            command.Id = id;
-            await Mediator.Send(command);
-            return Ok();
         }
 
         [HttpPatch("{id}/publish")]
@@ -177,8 +112,6 @@ namespace API.Controllers
         [HttpPatch("{id}/roadmap")]
         public async Task<IActionResult> PatchRoadmap(Guid id, [FromBody] RoadmapUpdateDto updateDto)
         {
-
-            Console.WriteLine("Controller: ");
             if (updateDto == null)
             {
                 return BadRequest("Invalid update payload.");
@@ -198,8 +131,38 @@ namespace API.Controllers
                 return StatusCode(500, new { message = $"An error occurred: {ex.Message}" });
             }
         }
+        
+        [HttpPut("checkboxes/{id}")]
+        public async Task<IActionResult> UpdateCheckboxes(Guid id, [FromBody] UpdateCheckedBoxes.Command command)
+        {
+            command.Id = id;
+            await Mediator.Send(command);
+            return Ok();
+        }
 
+        [HttpPatch("{entityType}/completion")]
+        public async Task<IActionResult> PatchCompletionStatus(string entityType, [FromBody] CompletionStatusDto updateDto)
+        {
+            if (updateDto == null)
+            {
+                return BadRequest("The request payload is invalid or missing.");
+            }
 
+            try
+            {
+                await Mediator.Send(new PatchCompletionStatus.Command
+                {
+                    EntityType = entityType.ToLower(),
+                    UpdateDto = updateDto
+                });
+
+                return Ok(new { message = $"{entityType} completion status updated successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"An error occurred: {ex.Message}" });
+            }
+        }
 
     }
 }

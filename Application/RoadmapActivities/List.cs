@@ -105,9 +105,11 @@ namespace Application.RoadmapActivities
                     .Take(request.PageSize)
                     .ToListAsync(cancellationToken);
 
-                Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Get Roadmap: {Roadmap}",
-                DateTime.UtcNow,
-                traceId,
+                //Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Get Roadmap: {Roadmap}",
+                Log.Information("Get Roadmap: {Roadmap}",
+
+                //DateTime.UtcNow,
+                //traceId,
                 JsonSerializer.Serialize(roadmaps, new JsonSerializerOptions
                 {
                     ReferenceHandler = ReferenceHandler.Preserve

@@ -20,6 +20,9 @@ namespace Domain.Dtos
         public Guid MilestoneId { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
+
+        public Guid RoadmapId { get; set; }
+        public bool IsDeleted { get; set; }
     }
 
     public class SectionPatchDto
@@ -27,6 +30,9 @@ namespace Domain.Dtos
         public Guid SectionId { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
+
+        public Guid MilestoneId { get; set; }
+        public bool IsDeleted { get; set; }
     }
 
     public class TaskPatchDto
@@ -35,6 +41,9 @@ namespace Domain.Dtos
         public string Name { get; set; }
         public DateTime? DateStart { get; set; }
         public DateTime? DateEnd { get; set; }
+
+        public Guid SectionId { get; set; }
+        public bool IsDeleted { get; set; }
     }
 
 }
