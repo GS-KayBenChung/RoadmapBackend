@@ -11,44 +11,50 @@ using System.Text.Json.Serialization;
 
 public class Create
 {
-    public class Command : IRequest<StatusDto>
+    //public class Command : IRequest<StatusDto>
+    public class Command : IRequest
     {
         public RoadmapDto RoadmapDto { get; set; }
     }
-    public class Handler : IRequestHandler<Create.Command, StatusDto>
+    //public class Handler : IRequestHandler<Create.Command, StatusDto>
+    public class Handler : IRequestHandler<Command>
     {
         private readonly DataContext _context;
-        private readonly IValidator<RoadmapDto> _validator;
+        //private readonly IValidator<RoadmapDto> _validator;
 
-        public Handler(DataContext context, IValidator<RoadmapDto> validator)
+        //public Handler(DataContext context, IValidator<RoadmapDto> validator)
+        public Handler(DataContext context)
+
         {
             _context = context;
-            _validator = validator;
+            //_validator = validator;
         }
 
-        public async Task<StatusDto> Handle(Create.Command request, CancellationToken cancellationToken)
+        //public async Task<StatusDto> Handle(Create.Command request, CancellationToken cancellationToken)
+        public async Task Handle(Create.Command request, CancellationToken cancellationToken)
+
         {
 
             var traceId = Guid.NewGuid().ToString();
 
-            var validationResult = await _validator.ValidateAsync(request.RoadmapDto, cancellationToken);
+            //var validationResult = await _validator.ValidateAsync(request.RoadmapDto, cancellationToken);
+            //if (!validationResult.IsValid)
+            //{
+            //    Console.WriteLine($"CreatedBy Value: {request.RoadmapDto.CreatedBy}");
 
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join(", ", validationResult.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}"));
-                Log.Error("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [ERROR] [TraceId: {TraceId}] Validation failed: {Errors}", DateTime.UtcNow, traceId, errors);
-                throw new ApplicationException("Validation failed: " + string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)));
-            }
+            //    var errors = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
+            //    Log.Warning("[{TraceId}] Validation failed: {Errors}", traceId, errors);
+            //    throw new ValidationException(errors);
+            //}
 
-            var existingRoadmap = await _context.Roadmaps.FirstOrDefaultAsync(r => r.Title == request.RoadmapDto.Title && !r.IsDeleted, cancellationToken);
+            var existingRoadmap = await _context.Roadmaps.FirstOrDefaultAsync(
+                r => r.Title == request.RoadmapDto.Title && !r.IsDeleted,
+                cancellationToken);
 
             if (existingRoadmap != null)
             {
-                return new StatusDto
-                {
-                    err = $"Cannot create roadmap because roadmap with title '{request.RoadmapDto.Title}' already exists in the database.",
-                    status = "401"
-                };
+                Log.Warning("[{TraceId}] Roadmap with title '{Title}' already exists", traceId, request.RoadmapDto.Title);
+                throw new Exception($"Roadmap with title '{request.RoadmapDto.Title}' already exists.");
             }
 
             var roadmap = new Roadmap
@@ -78,7 +84,7 @@ public class Create
                             UpdatedAt = DateTime.UtcNow,
                         };
                         _context.Milestones.Add(milestone);
-                        await _context.SaveChangesAsync(cancellationToken); // Save milestone to generate ID
+                        await _context.SaveChangesAsync(cancellationToken);
                         await Task.Delay(200, cancellationToken);
 
                         if (milestoneDto.Sections != null && milestoneDto.Sections.Count != 0)
@@ -118,19 +124,9 @@ public class Create
                             }
                         }
                     }
-
-                    Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Create Roadmap: {Roadmap}",
-                    DateTime.UtcNow,
-                    traceId,
-                    System.Text.Json.JsonSerializer.Serialize(roadmap, new JsonSerializerOptions
-                    {
-                        ReferenceHandler = ReferenceHandler.Preserve
-                    }));
-
-                }
-                await _context.SaveChangesAsync(cancellationToken);
-            return new StatusDto { err = "-1", status = "alsjdfajklsdf" };
+            }
+            await _context.SaveChangesAsync(cancellationToken);
+            Log.Information("[{TraceId}] Created Roadmap: {Roadmap}", traceId, roadmap);
         }
     }
-
 }

@@ -1,12 +1,7 @@
 
 using Application.AuditActivities;
 using Domain.Dtos;
-using Domain;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using System.Globalization;
-using Application.RoadmapActivities;
 
 namespace API.Controllers
 {
@@ -55,12 +50,6 @@ namespace API.Controllers
         [HttpPost("Createlogs")]
         public async Task<IActionResult> CreateLogs([FromBody] RoadmapLogsDto roadmapLogsDto)
         {
-
-
-            if (roadmapLogsDto == null || roadmapLogsDto.UserId == Guid.Empty || string.IsNullOrEmpty(roadmapLogsDto.ActivityAction))
-            {
-                return BadRequest(new { error = "Invalid log data" });
-            }
             var command = new CreateLogs.Command
             {
                 RoadmapLogsDto = roadmapLogsDto

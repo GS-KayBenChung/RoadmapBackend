@@ -161,14 +161,8 @@ namespace Application.RoadmapActivities
                     await _context.SaveChangesAsync(cancellationToken);
                 }
 
-                try
-                {
-                    var result = await _context.SaveChangesAsync(cancellationToken);
-                }
-                catch (DbUpdateException ex)
-                {
-                    throw new Exception("Database update failed.", ex);
-                }
+                var result = await _context.SaveChangesAsync(cancellationToken);
+               
             }
 
         }

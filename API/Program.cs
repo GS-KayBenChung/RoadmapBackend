@@ -1,7 +1,10 @@
-using API.ErrorHandling;
 using API.Extensions;
 using Application.Dtos;
+using Application.Validator;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Persistence;
@@ -55,10 +58,25 @@ builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddHostedService<GracefulShutdownService>();
 builder.Services.AddHostedService<PostgresMonitorService>();
 
+
+
 var app = builder.Build();
 
 // SERILOG
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(opts =>
+{
+    opts.GetLevel = (httpContext, elapsed, ex) =>
+    {
+        if (httpContext.Response.StatusCode >= 500)
+            return LogEventLevel.Error; 
+
+        if (httpContext.Response.StatusCode >= 400)
+            return LogEventLevel.Warning;
+
+        return LogEventLevel.Information; 
+    };
+});
+
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
 

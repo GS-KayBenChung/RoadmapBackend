@@ -25,8 +25,10 @@ public class CreateLogs
 
         public async Task Handle(Command request, CancellationToken cancellationToken)
         {
-
-            Console.WriteLine($"UserId: {request.RoadmapLogsDto.UserId}, ActivityAction: {request.RoadmapLogsDto.ActivityAction}");
+            if (string.IsNullOrEmpty(request.RoadmapLogsDto.ActivityAction))
+            {
+                //throw new ValidationException("ActivityAction is required.");
+            }
 
             var log = new AuditLog
             {
@@ -40,4 +42,5 @@ public class CreateLogs
             await _context.SaveChangesAsync(cancellationToken);
         }
     }
+
 }

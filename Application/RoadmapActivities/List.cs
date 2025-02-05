@@ -19,8 +19,8 @@ namespace Application.RoadmapActivities
             public DateTime? CreatedAfter { get; set; }
             public int PageNumber { get; set; }
             public int PageSize { get; set; }
-            public string SortBy { get; set; } 
-            public int Asc { get; set; } 
+            public string SortBy { get; set; }
+            public int Asc { get; set; }
         }
         public class Handler : IRequestHandler<Query, PaginatedRoadmapResult<Roadmap>>
         {
@@ -45,7 +45,7 @@ namespace Application.RoadmapActivities
                     var startOfDay = request.CreatedAfter.Value.Date;
                     var endOfDay = startOfDay.AddDays(1).AddTicks(-1);
                     query = query.Where(r => r.CreatedAt >= startOfDay);
-                    
+
                 }
 
                 if (!string.IsNullOrEmpty(request.Filter))
@@ -56,13 +56,25 @@ namespace Application.RoadmapActivities
                         "draft" => query.Where(r => r.IsDraft),
                         "published" => query.Where(r => !r.IsDraft),
                         "completed" => query.Where(r => r.IsCompleted),
-                        "neardue" => query.Where(r =>
+                        //"neardue" => query
+                        //                .Where(r => !r.IsDraft)
+                        //                .Where(r =>
+                        //    r.Milestones.SelectMany(m => m.Sections)
+                        //                .SelectMany(s => s.ToDoTasks)
+                        //                .Max(t => (DateTime?)t.DateEnd) <= DateTime.UtcNow.AddDays(7) &&
+                        //    r.Milestones.SelectMany(m => m.Sections)
+                        //                .SelectMany(s => s.ToDoTasks)
+                        //                .Max(t => (DateTime?)t.DateEnd) > DateTime.UtcNow),
+                        "neardue" => query.Where(r => !r.IsDraft &&
                             r.Milestones.SelectMany(m => m.Sections)
                                         .SelectMany(s => s.ToDoTasks)
+                                        .Where(t => !t.IsDeleted) 
                                         .Max(t => (DateTime?)t.DateEnd) <= DateTime.UtcNow.AddDays(7) &&
                             r.Milestones.SelectMany(m => m.Sections)
                                         .SelectMany(s => s.ToDoTasks)
+                                        .Where(t => !t.IsDeleted)
                                         .Max(t => (DateTime?)t.DateEnd) > DateTime.UtcNow),
+
                         "overdue" => query.Where(r =>
                             r.Milestones.SelectMany(m => m.Sections)
                                         .SelectMany(s => s.ToDoTasks)

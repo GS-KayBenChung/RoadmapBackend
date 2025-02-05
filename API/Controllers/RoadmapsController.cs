@@ -2,10 +2,6 @@ using Application.RoadmapActivities;
 using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Domain.Dtos;
-using Microsoft.AspNetCore.JsonPatch;
-using System.Text.Json;
-using Application.Validator;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
@@ -21,8 +17,7 @@ namespace API.Controllers
         [HttpGet("dashboard")]
         public async Task<ActionResult<DashboardStatsDto>> GetDashboardData()
         {
-            var response = await Mediator.Send(new DashboardList.Query());
-            return Ok(response); 
+            return Ok(await Mediator.Send(new DashboardList.Query()));
         }
 
         [HttpGet]
@@ -64,33 +59,9 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateRoadmap([FromBody] RoadmapDto roadmapDto)
         {
-            var validator = new RoadmapValidatorDto();
-            var validationResult = await validator.ValidateAsync(roadmapDto);
-
-            if (!validationResult.IsValid)
-            {
-                foreach (var failure in validationResult.Errors)
-                {
-                    ModelState.AddModelError(failure.PropertyName, failure.ErrorMessage);
-                }
-
-                var errorResponse = new
-                {
-                    type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-                    title = "One or more validation errors occurred.",
-                    status = 400,
-                    errors = ModelState.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
-                    ),
-                    traceId = HttpContext.TraceIdentifier
-                };
-
-                return BadRequest(errorResponse);
-            }
             var command = new Create.Command { RoadmapDto = roadmapDto };
-            StatusDto status = await Mediator.Send(command);
-            return Ok(status);
+            await Mediator.Send(command); 
+            return Ok(new { Message = "Roadmap created successfully" });
         }
       
         [HttpDelete("{id}")]
@@ -112,24 +83,8 @@ namespace API.Controllers
         [HttpPatch("{id}/roadmap")]
         public async Task<IActionResult> PatchRoadmap(Guid id, [FromBody] RoadmapUpdateDto updateDto)
         {
-            if (updateDto == null)
-            {
-                return BadRequest("Invalid update payload.");
-            }
-
-            try
-            {
-                await Mediator.Send(new PatchRoadmap.Command { RoadmapId = id, UpdateDto = updateDto });
-                return Ok(new { message = "Roadmap and related entities updated successfully." });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = $"An error occurred: {ex.Message}" });
-            }
+            await Mediator.Send(new PatchRoadmap.Command { RoadmapId = id, UpdateDto = updateDto });
+            return Ok(new { message = "Roadmap and related entities updated successfully." });
         }
         
         [HttpPut("checkboxes/{id}")]

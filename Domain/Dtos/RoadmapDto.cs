@@ -6,11 +6,11 @@ namespace Domain.Dtos
     public class RoadmapDto
     {
         [Required]
-        [StringLength(50, MinimumLength = 1, ErrorMessage = "Title must be between 1 and 50 characters.")]
+        //[StringLength(50, MinimumLength = 1, ErrorMessage = "Title must be between 1 and 50 characters.")]
         public string Title { get; set; }
 
         [Required]
-        [StringLength(100, MinimumLength = 1, ErrorMessage = "Description  must be between 1 and 100 characters.")]
+        //[StringLength(100, MinimumLength = 1, ErrorMessage = "Description  must be between 1 and 100 characters.")]
         public string Description { get; set; }
 
         [Required]
