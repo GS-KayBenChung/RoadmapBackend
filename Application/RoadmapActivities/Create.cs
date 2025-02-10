@@ -3,130 +3,150 @@ using Domain.Dtos;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using Persistence;
 using Serilog;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Persistence;
 
 public class Create
 {
-    //public class Command : IRequest<StatusDto>
     public class Command : IRequest
     {
-        public RoadmapDto RoadmapDto { get; set; }
+        public CreateRoadmapDto RoadmapDto { get; set; }
     }
-    //public class Handler : IRequestHandler<Create.Command, StatusDto>
+
     public class Handler : IRequestHandler<Command>
     {
         private readonly DataContext _context;
-        //private readonly IValidator<RoadmapDto> _validator;
+        private readonly IValidator<CreateRoadmapDto> _validator;
 
-        //public Handler(DataContext context, IValidator<RoadmapDto> validator)
-        public Handler(DataContext context)
-
+        public Handler(DataContext context, IValidator<CreateRoadmapDto> validator)
         {
             _context = context;
-            //_validator = validator;
+            _validator = validator;
         }
 
-        //public async Task<StatusDto> Handle(Create.Command request, CancellationToken cancellationToken)
-        public async Task Handle(Create.Command request, CancellationToken cancellationToken)
-
+        public async Task Handle(Command request, CancellationToken cancellationToken)
         {
-
             var traceId = Guid.NewGuid().ToString();
-
-            //var validationResult = await _validator.ValidateAsync(request.RoadmapDto, cancellationToken);
-            //if (!validationResult.IsValid)
-            //{
-            //    Console.WriteLine($"CreatedBy Value: {request.RoadmapDto.CreatedBy}");
-
-            //    var errors = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
-            //    Log.Warning("[{TraceId}] Validation failed: {Errors}", traceId, errors);
-            //    throw new ValidationException(errors);
-            //}
-
-            var existingRoadmap = await _context.Roadmaps.FirstOrDefaultAsync(
-                r => r.Title == request.RoadmapDto.Title && !r.IsDeleted,
-                cancellationToken);
-
-            if (existingRoadmap != null)
+            using (Serilog.Context.LogContext.PushProperty("TraceId", traceId))
             {
-                Log.Warning("[{TraceId}] Roadmap with title '{Title}' already exists", traceId, request.RoadmapDto.Title);
-                throw new Exception($"Roadmap with title '{request.RoadmapDto.Title}' already exists.");
-            }
+                Log.Information("Processing roadmap creation...");
 
-            var roadmap = new Roadmap
-            {
-                Title = request.RoadmapDto.Title,
-                Description = request.RoadmapDto.Description,
-                IsDraft = request.RoadmapDto.IsDraft,
-                CreatedBy = request.RoadmapDto.CreatedBy,
-                CreatedAt = request.RoadmapDto.CreatedAt,
-                OverallDuration = request.RoadmapDto.OverallDuration,
-                UpdatedAt = DateTime.UtcNow,
-            };
+                var validationResult = await _validator.ValidateAsync(request.RoadmapDto, cancellationToken);
+                if (!validationResult.IsValid)
+                {
+                    var errors = validationResult.Errors
+                        .ToDictionary(e => e.PropertyName, e => e.ErrorMessage);
+
+                    Log.Warning("Validation failed: {Errors}", string.Join(", ", errors.Select(e => $"{e.Key}: {e.Value}")));
+                    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
+                    {
+                        new("Validation", string.Join(", ", errors.Select(e => e.Value)))
+                    });
+                }
+
+                var userExists = await _context.UserRoadmap.AnyAsync(u => u.UserId == request.RoadmapDto.CreatedBy, cancellationToken);
+                if (!userExists)
+                {
+                    Log.Warning("Validation failed: User with ID {UserId} does not exist in the database", request.RoadmapDto.CreatedBy);
+                    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
+                    {
+                        new("Validation", $"User with ID {request.RoadmapDto.CreatedBy} does not exist")
+                    });
+                }
+
+                if (await _context.Roadmaps.AnyAsync(r => r.Title == request.RoadmapDto.Title && !r.IsDeleted, cancellationToken))
+                {
+                    Log.Warning("Validation failed: Roadmap with title '{Title}' already exists", request.RoadmapDto.Title);
+                    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
+                    {
+                        new("Validation", $"Roadmap with title '{request.RoadmapDto.Title}' already exists")
+                    });
+                }
+
+                var roadmap = new Roadmap
+                {
+                    Title = request.RoadmapDto.Title,
+                    Description = request.RoadmapDto.Description,
+                    IsDraft = request.RoadmapDto.IsDraft ?? false,
+                    CreatedBy = request.RoadmapDto.CreatedBy,
+                    CreatedAt = DateTime.UtcNow,
+                    OverallDuration = request.RoadmapDto.OverallDuration,
+                    UpdatedAt = DateTime.UtcNow
+                };
 
                 _context.Roadmaps.Add(roadmap);
                 await _context.SaveChangesAsync(cancellationToken);
+                await Task.Delay(200, cancellationToken);
 
-            if (request.RoadmapDto.Milestones != null && request.RoadmapDto.Milestones.Count != 0)
+                if (!roadmap.IsDraft && request.RoadmapDto.Milestones?.Count > 0)
                 {
-                    foreach (var milestoneDto in request.RoadmapDto.Milestones)
-                    {
-                        var milestone = new Milestone
-                        {
-                            RoadmapId = roadmap.RoadmapId,
-                            Name = milestoneDto.Name,
-                            Description = milestoneDto.Description,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow,
-                        };
-                        _context.Milestones.Add(milestone);
-                        await _context.SaveChangesAsync(cancellationToken);
-                        await Task.Delay(200, cancellationToken);
+                    await ProcessMilestonesAsync(request.RoadmapDto, roadmap, cancellationToken);
+                }
 
-                        if (milestoneDto.Sections != null && milestoneDto.Sections.Count != 0)
-                        {
-                            foreach (var sectionDto in milestoneDto.Sections)
-                            {
-                                var section = new Section
-                                {
-                                    MilestoneId = milestone.MilestoneId,
-                                    Name = sectionDto.Name,
-                                    Description = sectionDto.Description,
-                                    CreatedAt = DateTime.UtcNow,
-                                    UpdatedAt = DateTime.UtcNow,
-                                };
-                                _context.Sections.Add(section);
-                                await _context.SaveChangesAsync(cancellationToken);
-                                await Task.Delay(200, cancellationToken);
-
-                                if (sectionDto.Tasks != null && sectionDto.Tasks.Count != 0)
-                                {
-                                        foreach (var taskDto in sectionDto.Tasks)
-                                        {
-                                            var task = new ToDoTask
-                                            {
-                                                SectionId = section.SectionId,
-                                                Name = taskDto.Name,
-                                                DateStart = taskDto.DateStart,
-                                                DateEnd = taskDto.DateEnd,
-                                                CreatedAt = DateTime.UtcNow,
-                                                UpdatedAt = DateTime.UtcNow,
-                                            };
-                                            _context.ToDoTasks.Add(task);
-                                            await _context.SaveChangesAsync(cancellationToken);
-                                            await Task.Delay(200, cancellationToken);
-                                        }
-                                }
-                            }
-                        }
-                    }
+                Log.Information("[{TraceId}] Roadmap '{Title}' created successfully", traceId, roadmap.Title);
             }
-            await _context.SaveChangesAsync(cancellationToken);
-            Log.Information("[{TraceId}] Created Roadmap: {Roadmap}", traceId, roadmap);
+        }
+
+        private async Task ProcessMilestonesAsync(CreateRoadmapDto roadmapDto, Roadmap roadmap, CancellationToken cancellationToken)
+        {
+            foreach (var milestoneDto in roadmapDto.Milestones ?? new List<CreateMilestoneDto>())
+            {
+                var milestone = new Milestone
+                {
+                    RoadmapId = roadmap.RoadmapId,
+                    Name = milestoneDto.Name,
+                    Description = milestoneDto.Description,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.Milestones.Add(milestone);
+                await _context.SaveChangesAsync(cancellationToken);
+                await Task.Delay(200, cancellationToken);
+
+                await ProcessSectionsAsync(milestoneDto, milestone, cancellationToken);
+            }
+        }
+
+        private async Task ProcessSectionsAsync(CreateMilestoneDto milestoneDto, Milestone milestone, CancellationToken cancellationToken)
+        {
+            foreach (var sectionDto in milestoneDto.Sections ?? new List<CreateSectionDto>())
+            {
+                var section = new Section
+                {
+                    MilestoneId = milestone.MilestoneId,
+                    Name = sectionDto.Name,
+                    Description = sectionDto.Description,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.Sections.Add(section);
+                await _context.SaveChangesAsync(cancellationToken);
+                await Task.Delay(200, cancellationToken);
+
+                await ProcessTasksAsync(sectionDto, section, cancellationToken);
+            }
+        }
+
+        private async Task ProcessTasksAsync(CreateSectionDto sectionDto, Section section, CancellationToken cancellationToken)
+        {
+            foreach (var taskDto in sectionDto.Tasks ?? new List<CreateTaskDto>())
+            {
+                var task = new ToDoTask
+                {
+                    SectionId = section.SectionId,
+                    Name = taskDto.Name,
+                    DateStart = taskDto.DateStart,
+                    DateEnd = taskDto.DateEnd,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.ToDoTasks.Add(task);
+                await _context.SaveChangesAsync(cancellationToken);
+                await Task.Delay(200, cancellationToken);
+            }
         }
     }
 }

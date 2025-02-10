@@ -57,13 +57,13 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateRoadmap([FromBody] RoadmapDto roadmapDto)
+        public async Task<IActionResult> CreateRoadmap([FromBody] CreateRoadmapDto roadmapDto)
         {
             var command = new Create.Command { RoadmapDto = roadmapDto };
-            await Mediator.Send(command); 
+            await Mediator.Send(command);
             return Ok(new { Message = "Roadmap created successfully" });
         }
-      
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoadmap(Guid id)
         {
