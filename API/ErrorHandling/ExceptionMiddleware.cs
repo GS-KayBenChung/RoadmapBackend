@@ -1,12 +1,7 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using FluentValidation;
 using Serilog;
-using System;
-using System.Linq;
 using System.Net;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 public class ExceptionMiddleware
 {
@@ -30,6 +25,7 @@ public class ExceptionMiddleware
             await HandleExceptionAsync(httpContext, ex);
         }
     }
+
     private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
@@ -58,7 +54,7 @@ public class ExceptionMiddleware
         {
             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 
-            Log.Warning("Model binding failed: Invalid request format or data type.");
+            Log.Warning("Validation failed: Invalid request format or data type.");
 
             var response = new
             {
@@ -82,6 +78,7 @@ public class ExceptionMiddleware
         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
         await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
     }
+
 
     //private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
     //{
@@ -107,11 +104,11 @@ public class ExceptionMiddleware
     //        return;
     //    }
 
-    //    if (exception is BadHttpRequestException)
+    //    if (exception is BadHttpRequestException || exception is ArgumentNullException)
     //    {
     //        context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 
-    //        Log.Warning("[{TraceId}] Model binding failed: Invalid request format or data type.");
+    //        Log.Warning("Model binding failed: Invalid request format or data type.");
 
     //        var response = new
     //        {
@@ -135,4 +132,5 @@ public class ExceptionMiddleware
     //    context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
     //    await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
     //}
+
 }

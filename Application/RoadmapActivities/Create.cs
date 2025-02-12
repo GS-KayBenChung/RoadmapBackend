@@ -5,7 +5,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Persistence;
-
+using Application.Validator;
 public class Create
 {
     public class Command : IRequest
@@ -16,12 +16,12 @@ public class Create
     public class Handler : IRequestHandler<Command>
     {
         private readonly DataContext _context;
-        private readonly IValidator<CreateRoadmapDto> _validator;
+        private readonly IValidationService _validationService;
 
-        public Handler(DataContext context, IValidator<CreateRoadmapDto> validator)
+        public Handler(DataContext context, IValidationService validationService)
         {
             _context = context;
-            _validator = validator;
+            _validationService = validationService;
         }
 
         public async Task Handle(Command request, CancellationToken cancellationToken)
@@ -31,18 +31,20 @@ public class Create
             {
                 Log.Information("Processing roadmap creation...");
 
-                var validationResult = await _validator.ValidateAsync(request.RoadmapDto, cancellationToken);
-                if (!validationResult.IsValid)
-                {
-                    var errors = validationResult.Errors
-                        .ToDictionary(e => e.PropertyName, e => e.ErrorMessage);
+                await _validationService.ValidateAsync(request.RoadmapDto, cancellationToken);
 
-                    Log.Warning("Validation failed: {Errors}", string.Join(", ", errors.Select(e => $"{e.Key}: {e.Value}")));
-                    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
-                    {
-                        new("Validation", string.Join(", ", errors.Select(e => e.Value)))
-                    });
-                }
+                //var validationResult = await _validator.ValidateAsync(request.RoadmapDto, cancellationToken);
+                //if (!validationResult.IsValid)
+                //{
+                //    var errors = validationResult.Errors
+                //        .ToDictionary(e => e.PropertyName, e => e.ErrorMessage);
+
+                //    Log.Warning("Validation failed: {Errors}", string.Join(", ", errors.Select(e => $"{e.Key}: {e.Value}")));
+                //    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
+                //    {
+                //        new("Validation", string.Join(", ", errors.Select(e => e.Value)))
+                //    });
+                //}
 
                 var userExists = await _context.UserRoadmap.AnyAsync(u => u.UserId == request.RoadmapDto.CreatedBy, cancellationToken);
                 if (!userExists)

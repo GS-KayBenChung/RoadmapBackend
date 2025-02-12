@@ -1,164 +1,7 @@
-//using API.Extensions;
-//using FluentValidation;
-//using FluentValidation.AspNetCore;
-//using Microsoft.AspNetCore.Authentication.JwtBearer;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.EntityFrameworkCore;
-//using Microsoft.IdentityModel.Tokens;
-//using Persistence;
-//using Serilog;
-//using Serilog.Events;
-//using System.Text;
-//using System.Text.Json;
-
-//var builder = WebApplication.CreateBuilder(args);
-
-//builder.Services.Configure<JsonOptions>(options =>
-//{
-//    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-//    options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never;
-//});
-
-
-//builder.Services.AddControllers(options =>
-//{
-//    options.InputFormatters.Insert(0, new CustomJsonInputFormatter(new JsonSerializerOptions
-//    {
-//        PropertyNameCaseInsensitive = true
-//    }));
-//});
-
-//builder.Host.UseSerilog((context, services, configuration) =>
-//    configuration.ReadFrom.Configuration(context.Configuration));
-
-////NEW GOOGLEAUTH
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options =>
-//    {
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            ValidateIssuer = true,
-//            ValidateAudience = true,
-//            ValidateLifetime = true,
-//            ValidateIssuerSigningKey = true,
-//            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-//            ValidAudience = builder.Configuration["Jwt:Audience"],
-//            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-//        };
-//    });
-////NEW GOOGLEAUTH
-
-//// Add services to the container.
-//builder.Services.AddControllers();
-
-//builder.Services.AddCors(opt =>
-//{
-//    opt.AddPolicy("CorsPolicy", policy =>
-//    {
-//        policy.AllowAnyHeader()
-//              .AllowAnyMethod()
-//              .WithOrigins("http://localhost:3000")
-//              .AllowCredentials();
-//    });
-
-//});
-
-//// Moved all services to ApplicationServicesExtension file
-//builder.Services.AddApplicationServices(builder.Configuration);
-
-//builder.Services.AddHostedService<GracefulShutdownService>();
-//builder.Services.AddHostedService<PostgresMonitorService>();
-
-//builder.Services.AddValidatorsFromAssemblyContaining<CreateRoadmapValidator>();
-//builder.Services.AddValidatorsFromAssemblyContaining<CreateMilestoneValidator>();
-//builder.Services.AddValidatorsFromAssemblyContaining<CreateSectionValidator>();  
-//builder.Services.AddValidatorsFromAssemblyContaining<CreateTaskValidator>();
-
-////builder.Services.Configure<ApiBehaviorOptions>(options =>
-////{
-////    options.InvalidModelStateResponseFactory = context =>
-////    {
-////        var errors = context.ModelState
-////            .Where(e => e.Value.Errors.Count > 0)
-////            .ToDictionary(
-////                kvp => kvp.Key,
-////                kvp => kvp.Value.Errors.Select(error =>
-////                    error.Exception != null
-////                        ? $"Wrong data type for '{kvp.Key}'" 
-////                        : error.ErrorMessage 
-////                ).ToArray()
-////            );
-
-////        return new BadRequestObjectResult(new
-////        {
-////            Message = "Validation failed",
-////            Errors = errors
-////        });
-////    };
-////});
-
-
-//builder.Services.AddFluentValidationAutoValidation();
-
-//var app = builder.Build();
-
-//app.UseMiddleware<ExceptionMiddleware>();
-
-//// SERILOG
-//app.UseSerilogRequestLogging(opts =>
-//{
-//    opts.GetLevel = (httpContext, elapsed, ex) =>
-//    {
-//        if (httpContext.Response.StatusCode >= 500)
-//            return LogEventLevel.Error;
-
-//        if (httpContext.Response.StatusCode >= 400)
-//            return LogEventLevel.Warning;
-
-//        return LogEventLevel.Information;
-//    };
-//});
-
-//// Use Authentication Middleware
-//app.UseAuthentication();
-//app.UseAuthorization();
-
-//// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
-
-////app.UseHttpsRedirection();
-
-//app.UseCors("CorsPolicy");
-
-//app.UseAuthorization();
-//app.MapControllers();
-
-//using var scope = app.Services.CreateScope();
-//var services = scope.ServiceProvider;
-
-//try
-//{
-//    var context = services.GetRequiredService<DataContext>();
-//    context.Database.Migrate();
-//}
-//catch (Exception ex)
-//{
-//    var logger = services.GetRequiredService<ILogger<Program>>();
-//    logger.LogError(ex, "An Error Has Occured");
-//}
-
-//app.Run();
-
 using API.Extensions;
-using Application.Dtos;
 using Application.Validator;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -167,8 +10,6 @@ using Persistence;
 using Serilog;
 using Serilog.Events;
 using System.Text;
-using System.Text.Json;
-using static System.Net.Mime.MediaTypeNames;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -177,6 +18,8 @@ builder.Services.Configure<JsonOptions>(options =>
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never;
 });
+
+builder.Services.AddScoped<IValidationService, ValidationService>();
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
