@@ -106,6 +106,14 @@ namespace API.Controllers
             return Ok(new { Message = "Roadmap created successfully" });
         }
 
+        [HttpPatch("{id}/publish")]
+        public async Task<IActionResult> PublishRoadmap(Guid id)
+        {
+            var command = new Publish.Command { Id = id };
+            await Mediator.Send(command);
+            return Ok(new { Message = "Roadmap Published successfully" });
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoadmap(Guid id)
         {
@@ -114,13 +122,6 @@ namespace API.Controllers
             return Ok(status);
         }
 
-        [HttpPatch("{id}/publish")]
-        public async Task<IActionResult> PublishRoadmap(Guid id)
-        {
-            var command = new Publish.Command { Id = id };
-            StatusDto status = await Mediator.Send(command);
-            return Ok(status);
-        }
 
         [HttpPatch("{id}/roadmap")]
         public async Task<IActionResult> PatchRoadmap(Guid id, [FromBody] RoadmapUpdateDto updateDto)

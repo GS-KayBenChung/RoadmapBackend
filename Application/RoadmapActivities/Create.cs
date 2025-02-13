@@ -33,19 +33,6 @@ public class Create
 
                 await _validationService.ValidateAsync(request.RoadmapDto, cancellationToken);
 
-                //var validationResult = await _validator.ValidateAsync(request.RoadmapDto, cancellationToken);
-                //if (!validationResult.IsValid)
-                //{
-                //    var errors = validationResult.Errors
-                //        .ToDictionary(e => e.PropertyName, e => e.ErrorMessage);
-
-                //    Log.Warning("Validation failed: {Errors}", string.Join(", ", errors.Select(e => $"{e.Key}: {e.Value}")));
-                //    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
-                //    {
-                //        new("Validation", string.Join(", ", errors.Select(e => e.Value)))
-                //    });
-                //}
-
                 var userExists = await _context.UserRoadmap.AnyAsync(u => u.UserId == request.RoadmapDto.CreatedBy, cancellationToken);
                 if (!userExists)
                 {
@@ -80,12 +67,12 @@ public class Create
                 await _context.SaveChangesAsync(cancellationToken);
                 await Task.Delay(200, cancellationToken);
 
+                Log.Information("[{TraceId}] Roadmap '{Title}' created successfully", traceId, roadmap.Title);
+
                 if (!roadmap.IsDraft && request.RoadmapDto.Milestones?.Count > 0)
                 {
                     await ProcessMilestonesAsync(request.RoadmapDto, roadmap, cancellationToken);
                 }
-
-                Log.Information("[{TraceId}] Roadmap '{Title}' created successfully", traceId, roadmap.Title);
             }
         }
 
@@ -150,5 +137,7 @@ public class Create
                 await Task.Delay(200, cancellationToken);
             }
         }
+    
+        
     }
 }
