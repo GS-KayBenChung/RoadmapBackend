@@ -24,36 +24,6 @@ namespace API.Controllers
             return Ok(result);
         }
 
-        //[HttpGet]
-        //public async Task<ActionResult<PaginatedRoadmapResult<Roadmap>>> GetRoadmaps(
-        //    [FromQuery] string filter,
-        //    [FromQuery] string search,
-        //    [FromQuery] DateTime? date,
-        //    [FromQuery] int pageNumber,
-        //    [FromQuery] int pageSize,
-        //    [FromQuery] string sortBy,
-        //    [FromQuery] int asc)
-
-        //{
-        //    var paginationDefaults = _config.GetSection("PaginationDefaults");
-
-        //    pageNumber = pageNumber <= 0 ? paginationDefaults.GetValue<int>("DefaultPageNumber") : pageNumber;
-        //    pageSize = pageSize <= 0 ? paginationDefaults.GetValue<int>("DefaultPageSize") : pageSize;
-        //    sortBy = string.IsNullOrEmpty(sortBy) ? paginationDefaults.GetValue<string>("DefaultSortByRoadmap") : sortBy;
-        //    asc = asc == 0 ? paginationDefaults.GetValue<int>("DefaultAsc") : asc;
-
-        //    return await Mediator.Send(new List.Query 
-        //    {
-        //        Filter = filter,
-        //        Search = search,
-        //        CreatedAfter = date,
-        //        PageNumber = pageNumber,
-        //        PageSize = pageSize,
-        //        SortBy = sortBy,
-        //        Asc = asc
-        //    });
-        //}
-
         [HttpGet]
         public async Task<ActionResult<PaginatedRoadmapResult<Roadmap>>> GetRoadmaps(
             [FromQuery] Dictionary<string, string> queryParams,
@@ -121,8 +91,6 @@ namespace API.Controllers
                 Asc = asc.Value
             });
         }
-
-
 
         [HttpGet("details/{id}")]
         public async Task<ActionResult<RoadmapResponseDto>> GetRoadmapDetails(Guid id)

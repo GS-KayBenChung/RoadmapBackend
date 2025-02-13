@@ -1,11 +1,11 @@
 ﻿using Domain.Dtos;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 using Serilog;
-using System.Diagnostics;
-using System.Text.Json.Serialization;
-using System.Text.Json;
+
+using Application.Validator;
 
 namespace Application.RoadmapActivities
 {
@@ -19,14 +19,20 @@ namespace Application.RoadmapActivities
         public class Handler : IRequestHandler<Query, RoadmapResponseDto>
         {
             private readonly DataContext _context;
+            private readonly IValidationService _validationService;
 
-            public Handler(DataContext context)
+            public Handler(DataContext context, IValidationService validationService)
             {
                 _context = context;
+                _validationService = validationService;
             }
 
             public async Task<RoadmapResponseDto> Handle(Query request, CancellationToken cancellationToken)
             {
+                await _validationService.ValidateAsync(request, cancellationToken);
+
+                var traceId = Guid.NewGuid().ToString();
+
                 var roadmap = await _context.Roadmaps
                     .Include(r => r.Milestones.Where(m => !m.IsDeleted))
                         .ThenInclude(m => m.Sections.Where(s => !s.IsDeleted))
@@ -35,7 +41,20 @@ namespace Application.RoadmapActivities
 
                 if (roadmap == null)
                 {
-                    throw new Exception("Roadmap not found");
+                    Log.Warning("[{TraceId}] Roadmap with ID {RoadmapId} not found.", traceId, request.Id);
+                    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
+                    {
+                        new("RoadmapId", "Roadmap not found.")
+                    });
+                }
+
+                if (roadmap.IsDeleted)
+                {
+                    Log.Warning("[{TraceId}] Attempted to retrieve deleted roadmap {RoadmapId}.", traceId, request.Id);
+                    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
+                    {
+                        new("RoadmapId", "This roadmap has been deleted and cannot be retrieved.")
+                    });
                 }
 
                 var response = new RoadmapResponseDto
@@ -67,8 +86,8 @@ namespace Application.RoadmapActivities
                             Description = s.Description,
                             IsCompleted = s.IsCompleted,
                             Tasks = s.ToDoTasks
-                            .OrderBy(t => t.DateStart)  
-                            .ThenBy(t => t.TaskId)    
+                            .OrderBy(t => t.DateStart)
+                            .ThenBy(t => t.TaskId)
                             .Select(t => new TaskResponseDto
                             {
                                 TaskId = t.TaskId,
@@ -78,27 +97,11 @@ namespace Application.RoadmapActivities
                                 DateEnd = t.DateEnd,
                                 IsCompleted = t.IsCompleted
                             }).ToList()
-                            //Tasks = s.ToDoTasks.Select(t => new TaskResponseDto
-                            //{
-                            //    TaskId = t.TaskId,
-                            //    SectionId = t.SectionId,
-                            //    Name = t.Name,
-                            //    DateStart = t.DateStart,
-                            //    DateEnd = t.DateEnd,
-                            //    IsCompleted = t.IsCompleted
-                            //}).ToList()
                         }).ToList()
                     }).ToList()
                 };
-                var traceId = Guid.NewGuid().ToString();
-                var roadmapJson = JsonSerializer.Serialize(roadmap, new JsonSerializerOptions
-                {
-                    ReferenceHandler = ReferenceHandler.Preserve,
-                });
-                Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Get Roadmap: {Roadmap}",
-                DateTime.UtcNow,
-                traceId,
-                roadmapJson);
+
+                Log.Information("[{TraceId}] Roadmap details retrieved successfully: {RoadmapId}", traceId, roadmap.RoadmapId);
 
                 return response;
             }
