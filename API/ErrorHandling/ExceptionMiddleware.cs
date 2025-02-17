@@ -50,7 +50,7 @@ public class ExceptionMiddleware
             return;
         }
 
-        if (exception is BadHttpRequestException || exception is ArgumentNullException)
+        if (exception is BadHttpRequestException || exception is ArgumentNullException || exception is FormatException)
         {
             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 
@@ -65,6 +65,23 @@ public class ExceptionMiddleware
             await context.Response.WriteAsync(JsonSerializer.Serialize(response));
             return;
         }
+
+        if (exception is JsonException jsonException)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            var errorMessage = "Invalid JSON format or unknown fields detected.";
+            Log.Warning("[{TraceId}] {ErrorMessage}: {ExceptionMessage}", traceId, errorMessage, jsonException.Message);
+
+            var response = new
+            {
+                message = "Validation failed",
+                errors = new { Validation = new[] { errorMessage } }
+            };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            return;
+        }
+
 
         Log.Error("[{TraceId}] An unexpected error occurred: {Message}", traceId, exception.Message);
 

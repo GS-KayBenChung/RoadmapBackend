@@ -122,45 +122,47 @@ namespace API.Controllers
             return Ok(new { Message = "Roadmap Deleted successfully" });
         }
 
-
-
         [HttpPatch("{id}/roadmap")]
         public async Task<IActionResult> PatchRoadmap(Guid id, [FromBody] RoadmapUpdateDto updateDto)
         {
             await Mediator.Send(new PatchRoadmap.Command { RoadmapId = id, UpdateDto = updateDto });
             return Ok(new { message = "Roadmap and related entities updated successfully." });
         }
-        
-        [HttpPut("checkboxes/{id}")]
-        public async Task<IActionResult> UpdateCheckboxes(Guid id, [FromBody] UpdateCheckedBoxes.Command command)
-        {
-            command.Id = id;
-            await Mediator.Send(command);
-            return Ok();
-        }
+
+        //[HttpPatch("{entityType}/completion")]
+        //public async Task<IActionResult> PatchCompletionStatus(string entityType, [FromBody] CompletionStatusDto updateDto)
+        //{
+        //    if (updateDto == null)
+        //    {
+        //        return BadRequest("The request payload is invalid or missing.");
+        //    }
+
+        //    try
+        //    {
+        //        await Mediator.Send(new PatchCompletionStatus.Command
+        //        {
+        //            EntityType = entityType.ToLower(),
+        //            UpdateDto = updateDto
+        //        });
+
+        //        return Ok(new { message = $"{entityType} completion status updated successfully." });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { message = $"An error occurred: {ex.Message}" });
+        //    }
+        //}
 
         [HttpPatch("{entityType}/completion")]
         public async Task<IActionResult> PatchCompletionStatus(string entityType, [FromBody] CompletionStatusDto updateDto)
         {
-            if (updateDto == null)
+            await Mediator.Send(new PatchCompletionStatus.Command
             {
-                return BadRequest("The request payload is invalid or missing.");
-            }
+                EntityType = entityType.ToLower(),
+                UpdateDto = updateDto
+            });
 
-            try
-            {
-                await Mediator.Send(new PatchCompletionStatus.Command
-                {
-                    EntityType = entityType.ToLower(),
-                    UpdateDto = updateDto
-                });
-
-                return Ok(new { message = $"{entityType} completion status updated successfully." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = $"An error occurred: {ex.Message}" });
-            }
+            return Ok(new { message = "Roadmap and related entities updated successfully." });
         }
 
     }
