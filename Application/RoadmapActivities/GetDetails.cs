@@ -101,7 +101,7 @@ namespace Application.RoadmapActivities
                     }).ToList()
                 };
 
-                Log.Information("[{TraceId}] Roadmap details retrieved successfully: {RoadmapId}", traceId, roadmap.RoadmapId);
+                Log.Information("Roadmap details retrieved successfully: {RoadmapId}", roadmap.RoadmapId);
 
                 return response;
             }

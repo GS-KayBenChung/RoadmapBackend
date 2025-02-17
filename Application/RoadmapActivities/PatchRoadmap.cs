@@ -1,8 +1,11 @@
-﻿using Domain;
+﻿using Application.Validator;
+using Domain;
 using Domain.Dtos;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
+using Serilog;
 
 namespace Application.RoadmapActivities
 {
@@ -17,154 +20,198 @@ namespace Application.RoadmapActivities
         public class Handler : IRequestHandler<Command>
         {
             private readonly DataContext _context;
+            private readonly IValidationService _validationService;
 
-            public Handler(DataContext context)
+            public Handler(DataContext context, IValidationService validationService)
             {
                 _context = context;
+                _validationService = validationService;
             }
 
             public async Task Handle(Command request, CancellationToken cancellationToken)
             {
+                await _validationService.ValidateAsync(request, cancellationToken);
 
-                var roadmap = await _context.Roadmaps.FirstOrDefaultAsync(r => r.RoadmapId == request.RoadmapId, cancellationToken);
+                var traceId = Guid.NewGuid().ToString();
+                Log.Information("Started updating roadmap with ID: {RoadmapId}", request.RoadmapId);
+
+                var roadmap = await _context.Roadmaps
+                    .Include(r => r.Milestones)
+                        .ThenInclude(m => m.Sections)
+                            .ThenInclude(s => s.ToDoTasks)
+                    .FirstOrDefaultAsync(r => r.RoadmapId == request.RoadmapId, cancellationToken);
+
                 if (roadmap == null)
                 {
-                    throw new InvalidOperationException($"No Roadmap with ID '{request.RoadmapId}' found.");
+                    Log.Warning("Roadmap with ID {RoadmapId} not found.", request.RoadmapId);
+                    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
+                    {
+                        new("RoadmapId", "Roadmap not found.")
+                    });
                 }
 
-                if (request.UpdateDto.Roadmap != null)
+                if (roadmap.IsDeleted)
                 {
-                    roadmap.Title = request.UpdateDto.Roadmap.Title ?? roadmap.Title;
-                    roadmap.Description = request.UpdateDto.Roadmap.Description ?? roadmap.Description;
+                    Log.Warning(" Roadmap with ID {RoadmapId} is deleted and cannot be updated.", request.RoadmapId);
+                    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
+                    {
+                        new("RoadmapId", "This roadmap has been deleted and cannot be updated.")
+                    });
+                }
+
+                var updateDto = request.UpdateDto ?? new RoadmapUpdateDto();
+                updateDto.Roadmap ??= new RoadmapPatchDto();
+                updateDto.Milestones ??= new List<MilestonePatchDto>();
+                updateDto.Sections ??= new List<SectionPatchDto>();
+                updateDto.Tasks ??= new List<TaskPatchDto>();
+
+                if (!string.IsNullOrWhiteSpace(updateDto.Roadmap.Title) || !string.IsNullOrWhiteSpace(updateDto.Roadmap.Description))
+                {
+                    roadmap.Title = updateDto.Roadmap.Title ?? roadmap.Title;
+                    roadmap.Description = updateDto.Roadmap.Description ?? roadmap.Description;
                     roadmap.UpdatedAt = DateTime.UtcNow;
                 }
 
-                if (request.UpdateDto.Milestones?.Any() == true)
+                //  Update Milestones
+                if (updateDto.Milestones.Any())
                 {
-                    var milestoneIds = request.UpdateDto.Milestones.Select(m => m.MilestoneId).ToList();
-                    var milestones = await _context.Milestones.Where(m => milestoneIds.Contains(m.MilestoneId)).ToListAsync(cancellationToken);
+                    var existingMilestones = roadmap.Milestones.ToDictionary(m => m.MilestoneId);
 
-                    foreach (var milestone in milestones)
+                    foreach (var update in updateDto.Milestones)
                     {
-                        var update = request.UpdateDto.Milestones.FirstOrDefault(m => m.MilestoneId == milestone.MilestoneId);
-                        if (update.IsDeleted)
+                        if (update.MilestoneId == Guid.Empty)
                         {
-                            milestone.IsDeleted = true;
+                            throw new ValidationException($"Milestone '{update.Name}' is missing a valid milestoneId.");
                         }
-                        else
+
+                        if (existingMilestones.TryGetValue(update.MilestoneId, out var milestone))
                         {
-                            milestone.Name = update.Name ?? milestone.Name;
-                            milestone.Description = update.Description ?? milestone.Description;
+                            if (update.IsDeleted)
+                            {
+                                milestone.IsDeleted = true;
+                            }
+                            else
+                            {
+                                milestone.Name = update.Name ?? milestone.Name;
+                                milestone.Description = update.Description ?? milestone.Description;
+                            }
+                            milestone.UpdatedAt = DateTime.UtcNow;
                         }
-                        milestone.UpdatedAt = DateTime.UtcNow;
-                    }
-
-                    var existingMilestoneIds = milestones.Select(m => m.MilestoneId).ToList();
-                    var newMilestones = request.UpdateDto.Milestones.Where(m => !existingMilestoneIds.Contains(m.MilestoneId) && !m.IsDeleted).ToList();
-
-                    foreach (var newMilestone in newMilestones)
-                    {
-                        var milestone = new Milestone
+                        else if (!update.IsDeleted)
                         {
-                            MilestoneId = newMilestone.MilestoneId,
-                            Name = newMilestone.Name,
-                            Description = newMilestone.Description,
-                            RoadmapId = request.RoadmapId,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow,
-                            IsDeleted = false
-                        };
-                        _context.Milestones.Add(milestone);
+                            _context.Milestones.Add(new Milestone
+                            {
+                                MilestoneId = update.MilestoneId,
+                                RoadmapId = roadmap.RoadmapId,
+                                Name = update.Name,
+                                Description = update.Description,
+                                CreatedAt = DateTime.UtcNow,
+                                UpdatedAt = DateTime.UtcNow,
+                                IsDeleted = false
+                            });
+                        }
                     }
-                    await _context.SaveChangesAsync(cancellationToken);
                 }
 
-                if (request.UpdateDto.Sections?.Any() == true)
+                //  Update Sections
+                if (updateDto.Sections.Any())
                 {
-                    var sectionIds = request.UpdateDto.Sections.Select(s => s.SectionId).ToList();
-                    var sections = await _context.Sections.Where(s => sectionIds.Contains(s.SectionId)).ToListAsync(cancellationToken);
+                    var existingSections = roadmap.Milestones.SelectMany(m => m.Sections).ToDictionary(s => s.SectionId);
 
-                    foreach (var section in sections)
+                    foreach (var update in updateDto.Sections)
                     {
-                        var update = request.UpdateDto.Sections.FirstOrDefault(s => s.SectionId == section.SectionId);
-                        if (update.IsDeleted)
+                        if (update.SectionId == Guid.Empty || update.MilestoneId == Guid.Empty)
                         {
-                            section.IsDeleted = true;
+                            throw new ValidationException($"Section '{update.Name}' is missing a valid SectionId or MilestoneId.");
                         }
-                        else
+
+                        if (existingSections.TryGetValue(update.SectionId, out var section))
                         {
-                            section.Name = update.Name ?? section.Name;
-                            section.Description = update.Description ?? section.Description;
+                            if (update.IsDeleted)
+                            {
+                                section.IsDeleted = true;
+                            }
+                            else
+                            {
+                                section.Name = update.Name ?? section.Name;
+                                section.Description = update.Description ?? section.Description;
+                            }
+                            section.UpdatedAt = DateTime.UtcNow;
                         }
-                        section.UpdatedAt = DateTime.UtcNow;
-                    }
-
-                    var existingSectionIds = sections.Select(s => s.SectionId).ToList();
-                    var newSections = request.UpdateDto.Sections.Where(s => !existingSectionIds.Contains(s.SectionId) && !s.IsDeleted).ToList();
-
-                    foreach (var newSection in newSections)
-                    {
-                        var section = new Section
+                        else if (!update.IsDeleted)
                         {
-                            SectionId = newSection.SectionId,
-                            MilestoneId = newSection.MilestoneId,
-                            Name = newSection.Name,
-                            Description = newSection.Description,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow,
-                            IsDeleted = false 
-                        };
-                        _context.Sections.Add(section);
+                            _context.Sections.Add(new Section
+                            {
+                                SectionId = update.SectionId,
+                                MilestoneId = update.MilestoneId,
+                                Name = update.Name,
+                                Description = update.Description,
+                                CreatedAt = DateTime.UtcNow,
+                                UpdatedAt = DateTime.UtcNow,
+                                IsDeleted = false
+                            });
+                        }
                     }
-                    await _context.SaveChangesAsync(cancellationToken);
                 }
 
-                if (request.UpdateDto.Tasks?.Any() == true)
+                //  Update Tasks
+                if (updateDto.Tasks.Any())
                 {
-                    var taskIds = request.UpdateDto.Tasks.Select(t => t.TaskId).ToList();
-                    var tasks = await _context.ToDoTasks.Where(t => taskIds.Contains(t.TaskId)).ToListAsync(cancellationToken);
+                    var existingTasks = roadmap.Milestones.SelectMany(m => m.Sections)
+                                                          .SelectMany(s => s.ToDoTasks)
+                                                          .ToDictionary(t => t.TaskId);
 
-                    foreach (var task in tasks)
+                    foreach (var update in updateDto.Tasks)
                     {
-                        var update = request.UpdateDto.Tasks.FirstOrDefault(t => t.TaskId == task.TaskId);
-                        if (update.IsDeleted)
+                        if (update.TaskId == Guid.Empty || update.SectionId == Guid.Empty || update.MilestoneId == Guid.Empty)
                         {
-                            task.IsDeleted = true; 
+                            throw new ValidationException($"Task '{update.Name}' is missing a valid TaskId, SectionId, or MilestoneId.");
                         }
-                        else
+
+                        if (existingTasks.TryGetValue(update.TaskId, out var task))
                         {
-                            task.Name = update.Name ?? task.Name;
-                            task.DateStart = update.DateStart ?? task.DateStart;
-                            task.DateEnd = update.DateEnd ?? task.DateEnd;
+                            if (update.IsDeleted)
+                            {
+                                task.IsDeleted = true;
+                            }
+                            else
+                            {
+                                task.Name = update.Name ?? task.Name;
+                                task.DateStart = update.DateStart ?? task.DateStart;
+                                task.DateEnd = update.DateEnd ?? task.DateEnd;
+                            }
+                            task.UpdatedAt = DateTime.UtcNow;
                         }
-                        task.UpdatedAt = DateTime.UtcNow;
-                    }
-
-                    var existingTaskIds = tasks.Select(t => t.TaskId).ToList();
-                    var newTasks = request.UpdateDto.Tasks.Where(t => !existingTaskIds.Contains(t.TaskId) && !t.IsDeleted).ToList();
-
-                    foreach (var newTask in newTasks)
-                    {
-                        var task = new ToDoTask
+                        else if (!update.IsDeleted)
                         {
-                            SectionId = newTask.SectionId,
-                            TaskId = newTask.TaskId,
-                            Name = newTask.Name,
-                            DateStart = (DateTime)newTask.DateStart,
-                            DateEnd = (DateTime)newTask.DateEnd,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow,
-                            IsDeleted = false 
-                        };
-                        _context.ToDoTasks.Add(task);
+                            if (string.IsNullOrWhiteSpace(update.Name) || update.DateStart == null || update.DateEnd == null)
+                            {
+                                throw new ValidationException($"New task '{update.TaskId}' must have a name, start date, and end date.");
+                            }
+
+                            if (update.DateStart >= update.DateEnd)
+                            {
+                                throw new ValidationException($"New task '{update.TaskId}' has an invalid date range. Start date must be before end date.");
+                            }
+
+                            _context.ToDoTasks.Add(new ToDoTask
+                            {
+                                TaskId = update.TaskId,
+                                SectionId = update.SectionId,
+                                Name = update.Name,
+                                DateStart = update.DateStart.Value,
+                                DateEnd = update.DateEnd.Value,
+                                CreatedAt = DateTime.UtcNow,
+                                UpdatedAt = DateTime.UtcNow,
+                                IsDeleted = false
+                            });
+                        }
                     }
-                    await _context.SaveChangesAsync(cancellationToken);
                 }
 
-                var result = await _context.SaveChangesAsync(cancellationToken);
-               
+                await _context.SaveChangesAsync(cancellationToken);
+                Log.Information("Successfully updated roadmap with ID {RoadmapId}", request.RoadmapId);
             }
-
         }
     }
 }

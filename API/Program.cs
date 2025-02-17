@@ -69,6 +69,9 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateSectionValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateTaskValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<ListQueryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<GetDetailsQueryValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<DeleteRoadmapValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<PatchRoadmapValidator>();
+
 
 builder.Services.AddFluentValidationAutoValidation();
 

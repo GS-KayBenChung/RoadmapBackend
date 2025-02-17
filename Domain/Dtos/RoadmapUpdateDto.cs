@@ -42,6 +42,7 @@ namespace Domain.Dtos
         public DateTime? DateStart { get; set; }
         public DateTime? DateEnd { get; set; }
 
+        public Guid MilestoneId { get; set; }
         public Guid SectionId { get; set; }
         public bool IsDeleted { get; set; }
     }

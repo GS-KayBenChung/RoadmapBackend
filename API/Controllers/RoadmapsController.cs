@@ -118,9 +118,10 @@ namespace API.Controllers
         public async Task<IActionResult> DeleteRoadmap(Guid id)
         {
             var command = new Delete.Command { Id = id };
-            StatusDto status = await Mediator.Send(command);
-            return Ok(status);
+            await Mediator.Send(command);
+            return Ok(new { Message = "Roadmap Deleted successfully" });
         }
+
 
 
         [HttpPatch("{id}/roadmap")]

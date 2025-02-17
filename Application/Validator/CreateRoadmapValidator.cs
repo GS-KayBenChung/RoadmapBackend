@@ -7,11 +7,11 @@ public class CreateRoadmapValidator : AbstractValidator<CreateRoadmapDto>
     {
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Title is required.")
-            .MaximumLength(100).WithMessage("Title must not exceed 100 characters.");
+            .MaximumLength(100).WithMessage("Title must not exceed 50 characters.");
 
         RuleFor(x => x.Description)
             .NotEmpty().WithMessage("Description is required.")
-            .MaximumLength(500).WithMessage("Description must not exceed 500 characters.");
+            .MaximumLength(500).WithMessage("Description must not exceed 100 characters.");
 
         RuleFor(x => x.IsDraft)
             .NotNull().WithMessage("IsDraft is required."); 

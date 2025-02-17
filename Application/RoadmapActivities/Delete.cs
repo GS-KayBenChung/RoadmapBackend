@@ -1,4 +1,5 @@
-﻿using Domain.Dtos;
+﻿using Application.Validator;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
@@ -8,26 +9,28 @@ namespace Application.RoadmapActivities
 {
     public class Delete
     {
-        public class Command : IRequest<StatusDto>
+        public class Command : IRequest
         {
             public Guid Id { get; set; }
         }
 
-        public class Handler : IRequestHandler<Command, StatusDto>
+        public class Handler : IRequestHandler<Command>
         {
             private readonly DataContext _context;
+            private readonly IValidationService _validationService;
 
-            public Handler(DataContext context)
+            public Handler(DataContext context, IValidationService validationService)
             {
                 _context = context;
+                _validationService = validationService;
             }
 
-            public async Task<StatusDto> Handle(Command request, CancellationToken cancellationToken)
+            public async Task Handle(Command request, CancellationToken cancellationToken)
             {
-                var traceId = Guid.NewGuid().ToString();
+                await _validationService.ValidateAsync(request, cancellationToken);
 
-                Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Started deleting roadmap with ID: {RoadmapId}",
-                    DateTime.UtcNow, traceId, request.Id);
+                var traceId = Guid.NewGuid().ToString();
+                Log.Information("[{TraceId}] Started deleting roadmap with ID: {RoadmapId}", traceId, request.Id);
 
                 var roadmap = await _context.Roadmaps
                     .Include(r => r.Milestones)
@@ -35,16 +38,22 @@ namespace Application.RoadmapActivities
                             .ThenInclude(s => s.ToDoTasks)
                     .FirstOrDefaultAsync(r => r.RoadmapId == request.Id, cancellationToken);
 
-                if (roadmap == null || roadmap.IsDeleted == true)
+                if (roadmap == null)
                 {
-                    Log.Warning("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [WARNING] [TraceId: {TraceId}] Roadmap with ID: {RoadmapId} not found or already deleted.",
-                        DateTime.UtcNow, traceId, request.Id);
-
-                    return new StatusDto
+                    Log.Warning("[{TraceId}] Roadmap with ID {RoadmapId} not found.", traceId, request.Id);
+                    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
                     {
-                        err = $"Cannot delete roadmap because roadmap with this ID does not exist in the database.",
-                        status = "401"
-                    };
+                        new("RoadmapId", "Roadmap not found.")
+                    });
+                }
+
+                if (roadmap.IsDeleted)
+                {
+                    Log.Warning("[{TraceId}] Roadmap with ID {RoadmapId} is already deleted.", traceId, request.Id);
+                    throw new ValidationException(new List<FluentValidation.Results.ValidationFailure>
+                    {
+                        new("RoadmapId", "Roadmap is already deleted.")
+                    });
                 }
 
                 roadmap.IsDeleted = true;
@@ -52,11 +61,9 @@ namespace Application.RoadmapActivities
                 foreach (var milestone in roadmap.Milestones)
                 {
                     milestone.IsDeleted = true;
-
                     foreach (var section in milestone.Sections)
                     {
                         section.IsDeleted = true;
-
                         foreach (var task in section.ToDoTasks)
                         {
                             task.IsDeleted = true;
@@ -65,13 +72,9 @@ namespace Application.RoadmapActivities
                 }
 
                 _context.Roadmaps.Update(roadmap);
-
                 await _context.SaveChangesAsync(cancellationToken);
 
-                Log.Information("[{Timestamp:yyyy-MM-dd HH:mm:ss}] [INFO] [TraceId: {TraceId}] Successfully deleted roadmap with ID: {RoadmapId}",
-                    DateTime.UtcNow, traceId, request.Id);
-
-                return new StatusDto { err = "None", status = "Success" };
+                Log.Information("[{TraceId}] Successfully deleted roadmap with ID {RoadmapId}", traceId, request.Id);
             }
         }
     }
