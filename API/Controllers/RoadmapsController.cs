@@ -129,30 +129,6 @@ namespace API.Controllers
             return Ok(new { message = "Roadmap and related entities updated successfully." });
         }
 
-        //[HttpPatch("{entityType}/completion")]
-        //public async Task<IActionResult> PatchCompletionStatus(string entityType, [FromBody] CompletionStatusDto updateDto)
-        //{
-        //    if (updateDto == null)
-        //    {
-        //        return BadRequest("The request payload is invalid or missing.");
-        //    }
-
-        //    try
-        //    {
-        //        await Mediator.Send(new PatchCompletionStatus.Command
-        //        {
-        //            EntityType = entityType.ToLower(),
-        //            UpdateDto = updateDto
-        //        });
-
-        //        return Ok(new { message = $"{entityType} completion status updated successfully." });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { message = $"An error occurred: {ex.Message}" });
-        //    }
-        //}
-
         [HttpPatch("{entityType}/completion")]
         public async Task<IActionResult> PatchCompletionStatus(string entityType, [FromBody] CompletionStatusDto updateDto)
         {

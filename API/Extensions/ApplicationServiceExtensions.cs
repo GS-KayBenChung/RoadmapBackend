@@ -13,7 +13,7 @@ namespace API.Extensions
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration config)
         {
-            services.AddValidatorsFromAssemblyContaining<RoadmapValidatorDto>();
+            //services.AddValidatorsFromAssemblyContaining<RoadmapValidatorDto>();
 
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();

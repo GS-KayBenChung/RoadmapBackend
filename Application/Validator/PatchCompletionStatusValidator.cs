@@ -42,9 +42,6 @@ namespace Application.Validator
                     .Empty().WithMessage("Tasks do not support progress.");
             });
 
-            //RuleFor(x => x.UpdateDto)
-            //    .Must(CompletionStatusDto => CompletionStatusDto.AdditionalData == null || CompletionStatusDto.AdditionalData.Count == 0);
-
             RuleFor(x => x.UpdateDto)
                 .NotNull().WithMessage("Update data cannot be null.")
                 .DependentRules(() =>

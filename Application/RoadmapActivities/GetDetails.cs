@@ -37,7 +37,9 @@ namespace Application.RoadmapActivities
                     .Include(r => r.Milestones.Where(m => !m.IsDeleted))
                         .ThenInclude(m => m.Sections.Where(s => !s.IsDeleted))
                             .ThenInclude(s => s.ToDoTasks.Where(t => !t.IsDeleted))
+                    .AsSplitQuery()
                     .FirstOrDefaultAsync(r => r.RoadmapId == request.Id, cancellationToken);
+
 
                 if (roadmap == null)
                 {

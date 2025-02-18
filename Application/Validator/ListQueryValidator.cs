@@ -38,7 +38,7 @@ namespace Application.Validator
                 .Must(BeValidDate)
                 .WithMessage("Invalid date format.");
         }
-
+        
         private bool BeValidDate(DateTime? date)
         {
             if (!date.HasValue) return true;

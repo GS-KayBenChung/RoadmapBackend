@@ -1,5 +1,4 @@
 ﻿using Application.Validator;
-using Domain;
 using Domain.Dtos;
 using FluentValidation;
 using MediatR;

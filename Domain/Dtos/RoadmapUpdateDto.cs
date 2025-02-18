@@ -1,4 +1,7 @@
 ﻿
+using System.Text.Json.Serialization;
+using System.Text.Json;
+
 namespace Domain.Dtos
 {
     public class RoadmapUpdateDto
@@ -7,12 +10,18 @@ namespace Domain.Dtos
         public List<MilestonePatchDto> Milestones { get; set; }
         public List<SectionPatchDto> Sections { get; set; }
         public List<TaskPatchDto> Tasks { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> AdditionalData { get; set; } = new Dictionary<string, JsonElement>();
     }
 
     public class RoadmapPatchDto
     {
         public string Title { get; set; }
         public string Description { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> AdditionalData { get; set; } = new Dictionary<string, JsonElement>();
     }
 
     public class MilestonePatchDto
@@ -23,6 +32,9 @@ namespace Domain.Dtos
 
         public Guid RoadmapId { get; set; }
         public bool IsDeleted { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> AdditionalData { get; set; } = new Dictionary<string, JsonElement>();
     }
 
     public class SectionPatchDto
@@ -33,6 +45,9 @@ namespace Domain.Dtos
 
         public Guid MilestoneId { get; set; }
         public bool IsDeleted { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> AdditionalData { get; set; } = new Dictionary<string, JsonElement>();
     }
 
     public class TaskPatchDto
@@ -45,6 +60,9 @@ namespace Domain.Dtos
         public Guid MilestoneId { get; set; }
         public Guid SectionId { get; set; }
         public bool IsDeleted { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> AdditionalData { get; set; } = new Dictionary<string, JsonElement>();
     }
 
 }
