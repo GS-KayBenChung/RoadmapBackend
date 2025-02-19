@@ -64,14 +64,14 @@ builder.Services.AddHostedService<GracefulShutdownService>();
 builder.Services.AddHostedService<PostgresMonitorService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateRoadmapValidator>();
-//builder.Services.AddValidatorsFromAssemblyContaining<CreateMilestoneValidator>();
-//builder.Services.AddValidatorsFromAssemblyContaining<CreateSectionValidator>();
-//builder.Services.AddValidatorsFromAssemblyContaining<CreateTaskValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<ListQueryValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<GetDetailsQueryValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateLogsValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<DeleteRoadmapValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<GetDetailsQueryValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<GetLogsValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<ListQueryValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<PatchCompletionStatusValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<PatchRoadmapValidator>();
-
+builder.Services.AddValidatorsFromAssemblyContaining<PublishRoadmapValidator>();
 
 builder.Services.AddFluentValidationAutoValidation();
 

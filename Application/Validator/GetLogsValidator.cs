@@ -1,20 +1,18 @@
-﻿
-using Application.RoadmapActivities;
+﻿using Application.AuditActivities;
 using FluentValidation;
 
 namespace Application.Validator
 {
-    public class ListQueryValidator : AbstractValidator<List.Query>
+    public class GetLogsValidator : AbstractValidator<GetLogs.Query>
     {
-        private static readonly string[] AllowedFilters = { "draft", "published", "completed", "neardue", "overdue" };
-        private static readonly string[] AllowedSortFields = { "title", "createdat", "updatedat" };
+        private static readonly string[] AllowedFilters = { "created", "updated", "deleted" };
+        private static readonly string[] AllowedSortFields = { "activityaction", "createdat", "name" };
 
-        public ListQueryValidator()
+        public GetLogsValidator()
         {
             RuleFor(x => x.PageNumber)
                 .GreaterThanOrEqualTo(1)
-                .WithMessage("Page number must be at least 1.")
-                .LessThanOrEqualTo(100);
+                .WithMessage("Page number must be at least 1.");
 
             RuleFor(x => x.PageSize)
                 .Must(size => size == 5 || size % 5 == 0)
@@ -24,7 +22,6 @@ namespace Application.Validator
                 .WithMessage("Page size cannot be more than 20.")
                 .NotEqual(0)
                 .WithMessage("Page size cannot be 0.");
-
 
             RuleFor(x => x.Filter)
                 .Must(filter => string.IsNullOrEmpty(filter) || AllowedFilters.Contains(filter.ToLower()))
@@ -38,15 +35,16 @@ namespace Application.Validator
                 .Must(asc => asc == 0 || asc == 1)
                 .WithMessage("Sort order must be 0 (descending) or 1 (ascending).");
 
-            RuleFor(x => x.CreatedAfter)
+            RuleFor(x => x.CreatedOn)
                 .Must(BeValidDate)
                 .WithMessage("Invalid date format.");
         }
-        
+
         private bool BeValidDate(DateTime? date)
         {
             if (!date.HasValue) return true;
             return date.Value.Kind == DateTimeKind.Utc;
         }
     }
+
 }
