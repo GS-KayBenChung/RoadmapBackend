@@ -40,8 +40,8 @@ namespace API.Extensions
             services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
             //Check DB Connection
-                services.AddHealthChecks()
-                    .AddCheck<PostgresHealthCheck>("postgres", tags: new[] { "db", "postgres" });
+                //services.AddHealthChecks()
+                //    .AddCheck<PostgresHealthCheck>("postgres", tags: new[] { "db", "postgres" });
 
 
             return services;

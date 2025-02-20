@@ -16,9 +16,9 @@ namespace Application.Validator
 
             When(x => x.UpdateDto != null, () =>
             {
-                RuleFor(x => x.UpdateDto.Roadmap)
-                    .Must(roadmap => roadmap == null || !string.IsNullOrWhiteSpace(roadmap.Title) || !string.IsNullOrWhiteSpace(roadmap.Description))
-                    .WithMessage("If provided, Roadmap title or description cannot be empty.");
+                //RuleFor(x => x.UpdateDto.Roadmap)
+                //    .Must(roadmap => roadmap == null || !string.IsNullOrWhiteSpace(roadmap.Title) || !string.IsNullOrWhiteSpace(roadmap.Description))
+                //    .WithMessage("If provided, Roadmap title or description cannot be empty.");
 
                 RuleFor(x => x.UpdateDto.Roadmap.Title)
                    .NotEmpty().When(x => x.UpdateDto.Roadmap != null)

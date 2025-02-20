@@ -5,6 +5,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Persistence;
 using Serilog;
@@ -60,8 +61,11 @@ builder.Services.AddCors(opt =>
 // Moved all services to ApplicationServicesExtension file
 builder.Services.AddApplicationServices(builder.Configuration);
 
+
+builder.Services.AddSingleton<PostgresHealthCheck>();
 builder.Services.AddHostedService<GracefulShutdownService>();
-builder.Services.AddHostedService<PostgresMonitorService>();
+builder.Services.AddHttpClient<MicroserviceHealthCheck>();
+builder.Services.AddHostedService<MicroserviceHealthCheck>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateRoadmapValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateLogsValidator>();
@@ -73,9 +77,35 @@ builder.Services.AddValidatorsFromAssemblyContaining<PatchCompletionStatusValida
 builder.Services.AddValidatorsFromAssemblyContaining<PatchRoadmapValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<PublishRoadmapValidator>();
 
-builder.Services.AddFluentValidationAutoValidation();
 
+builder.Services.AddFluentValidationAutoValidation();
 var app = builder.Build();
+
+
+var logger2 = app.Services.GetRequiredService<ILogger<Program>>();
+var dbHealthCheck = app.Services.GetRequiredService<PostgresHealthCheck>();
+
+if (!await dbHealthCheck.CheckDatabaseConnection())
+{
+    logger2.LogError("PostgreSQL is unreachable. Shutting down application.");
+    return;
+}
+
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    Task.Run(async () =>
+    {
+        while (!app.Lifetime.ApplicationStopping.IsCancellationRequested)
+        {
+            if (!await dbHealthCheck.CheckDatabaseConnection())
+            {
+                logger2.LogError("PostgreSQL connection lost! Shutting down...");
+                Environment.Exit(1); 
+            }
+            await Task.Delay(5000); 
+        }
+    });
+});
 
 app.UseMiddleware<ExceptionMiddleware>();
 

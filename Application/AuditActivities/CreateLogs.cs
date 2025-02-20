@@ -79,7 +79,7 @@ public class CreateLogs
                 LogId = Guid.NewGuid(),
                 UserId = request.RoadmapLogsDto.UserId,
                 ActivityAction = request.RoadmapLogsDto.ActivityAction,
-                CreatedAt = request.RoadmapLogsDto.CreatedAt
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.AuditLogs.Add(log);

@@ -1,29 +1,23 @@
-using Microsoft.Extensions.Hosting;
-
-public class GracefulShutdownService : IHostedService
+public class GracefulShutdownService : BackgroundService
 {
-    private readonly IHostApplicationLifetime _lifetime;
+    private readonly IHostApplicationLifetime _appLifetime;
     private readonly ILogger<GracefulShutdownService> _logger;
 
-    public GracefulShutdownService(IHostApplicationLifetime lifetime, ILogger<GracefulShutdownService> logger)
+    public GracefulShutdownService(IHostApplicationLifetime appLifetime, ILogger<GracefulShutdownService> logger)
     {
-        _lifetime = lifetime;
+        _appLifetime = appLifetime;
         _logger = logger;
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _lifetime.ApplicationStopping.Register(OnStopping);
+        _appLifetime.ApplicationStopping.Register(OnShutdown);
         return Task.CompletedTask;
     }
 
-    private void OnStopping()
+    private void OnShutdown()
     {
-        _logger.LogInformation("Application is shutting down...");
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
+        _logger.LogWarning("Application is shutting down gracefully...");
+        Console.WriteLine("Application is shutting down gracefully...");
     }
 }

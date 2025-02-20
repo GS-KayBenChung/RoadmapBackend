@@ -1,28 +1,27 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Npgsql;
-
-public class PostgresHealthCheck : IHealthCheck
+public class PostgresHealthCheck
 {
     private readonly string _connectionString;
+    private readonly ILogger<PostgresHealthCheck> _logger;
 
-    public PostgresHealthCheck(IConfiguration configuration)
+    public PostgresHealthCheck(IConfiguration config, ILogger<PostgresHealthCheck> logger)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection");
+        _connectionString = config.GetConnectionString("DefaultConnection");
+        _logger = logger;
     }
 
-    public async Task<HealthCheckResult> CheckHealthAsync(
-        HealthCheckContext context, CancellationToken cancellationToken = default)
+    public async Task<bool> CheckDatabaseConnection()
     {
         try
         {
-            using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync(cancellationToken);
-            return HealthCheckResult.Healthy("Postgres is running.");
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+            return true;
         }
         catch (Exception ex)
         {
-            return HealthCheckResult.Unhealthy("Postgres is unavailable.", ex);
+            _logger.LogError($"Database connection failed: {ex.Message}");
+            return false;
         }
     }
 }

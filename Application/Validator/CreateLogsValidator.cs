@@ -19,11 +19,6 @@ namespace Application.Validator
                 .MinimumLength(5).WithMessage("ActivityAction must be at least 5 characters long.")
                 .MaximumLength(100).WithMessage("ActivityAction must not exceed 100 characters.");
 
-            RuleFor(x => x.CreatedAt)
-                .NotEmpty().WithMessage("CreatedAt is required.")
-                .Must(date => DateTime.TryParse(date.ToString(), out _))
-                .WithMessage("CreatedAt must be a valid DateTime format.");
-
             RuleFor(x => x.AdditionalData)
                 .Must(additionalData => additionalData == null || additionalData.Count == 0)
                 .WithMessage(x => x.AdditionalData != null
