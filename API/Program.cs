@@ -126,6 +126,8 @@ app.UseSerilogRequestLogging(opts =>
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseMiddleware<GoogleTokenValidationMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

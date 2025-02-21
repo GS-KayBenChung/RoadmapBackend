@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Application.Dtos;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
     //[Route("api/roadmaps")]
+    [AllowAnonymous]
     public class AuthenticationController : BaseApiController
     {
         private readonly IMediator _mediator;

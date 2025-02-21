@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Domain.Dtos;
 using Serilog;
 using System.Text.Json;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
