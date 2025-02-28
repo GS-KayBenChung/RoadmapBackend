@@ -18,6 +18,5 @@ public class GracefulShutdownService : BackgroundService
     private void OnShutdown()
     {
         _logger.LogWarning("Application is shutting down gracefully...");
-        Console.WriteLine("Application is shutting down gracefully...");
     }
 }

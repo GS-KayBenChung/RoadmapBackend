@@ -17,57 +17,6 @@ public class GoogleTokenValidationMiddleware
         _logger = logger;
     }
 
-    //public async Task Invoke(HttpContext context)
-    //{
-    //    var path = context.Request.Path.Value?.ToLower();
-    //    var authorizationHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-
-    //    _logger.LogInformation($"Incoming Request: {path}");
-
-    //    if (path == "/api/authentication/googleresponse")
-    //    {
-    //        _logger.LogInformation(" Skipping authentication for Google login.");
-    //        await _next(context);
-    //        return;
-    //    }
-
-    //    if (authorizationHeader != null && authorizationHeader.StartsWith("Bearer "))
-    //    {
-    //        var token = authorizationHeader.Substring("Bearer ".Length);
-    //        _logger.LogInformation($" Received Token: {token}");
-
-    //        try
-    //        {
-    //            var googlePayload = await GoogleJsonWebSignature.ValidateAsync(token, new GoogleJsonWebSignature.ValidationSettings
-    //            {
-    //                Audience = new[] { _config["Authentication:Google:ClientId"] }
-    //            });
-
-    //            _logger.LogInformation($"Google Token Verified: {googlePayload.Email}");
-
-    //            var claims = new[]
-    //            {
-    //            new Claim(ClaimTypes.NameIdentifier, googlePayload.Subject),
-    //            new Claim(ClaimTypes.Email, googlePayload.Email),
-    //            new Claim(ClaimTypes.Name, googlePayload.Name)
-    //        };
-
-    //            var identity = new ClaimsIdentity(claims, "Google");
-    //            var principal = new ClaimsPrincipal(identity);
-    //            context.User = principal;
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogWarning($"Invalid Google Token: {ex.Message}");
-    //            context.Response.StatusCode = 401;
-    //            await context.Response.WriteAsync("Invalid Google Token");
-    //            return;
-    //        }
-    //    }
-
-    //    await _next(context);
-    //}
-
     public async Task Invoke(HttpContext context)
     {
         var path = context.Request.Path.Value?.ToLower();
@@ -141,8 +90,4 @@ public class GoogleTokenValidationMiddleware
 
         await _next(context);
     }
-
-
-
-
 }

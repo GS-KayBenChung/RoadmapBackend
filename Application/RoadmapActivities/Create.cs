@@ -69,7 +69,8 @@ public class Create
 
                 Log.Information("[{TraceId}] Roadmap '{Title}' created successfully", traceId, roadmap.Title);
 
-                if (!roadmap.IsDraft && request.RoadmapDto.Milestones?.Count > 0)
+                //if (!roadmap.IsDraft && request.RoadmapDto.Milestones?.Count > 0)
+                if (request.RoadmapDto.Milestones?.Count > 0)
                 {
                     await ProcessMilestonesAsync(request.RoadmapDto, roadmap, cancellationToken);
                 }

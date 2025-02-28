@@ -34,11 +34,23 @@ namespace Application.RoadmapActivities
                 var traceId = Guid.NewGuid().ToString();
 
                 var roadmap = await _context.Roadmaps
-                    .Include(r => r.Milestones.Where(m => !m.IsDeleted))
-                        .ThenInclude(m => m.Sections.Where(s => !s.IsDeleted))
-                            .ThenInclude(s => s.ToDoTasks.Where(t => !t.IsDeleted))
-                    .AsSplitQuery()
-                    .FirstOrDefaultAsync(r => r.RoadmapId == request.Id, cancellationToken);
+                    .Include(r => r.Milestones.Where(m => !m.IsDeleted)
+                    .OrderBy(m => m.CreatedAt) 
+                    )
+                    .ThenInclude(m => m.Sections.Where(s => !s.IsDeleted)
+                        .OrderBy(s => s.CreatedAt) 
+                    )
+                        .ThenInclude(s => s.ToDoTasks.Where(t => !t.IsDeleted)
+                            .OrderBy(t => t.DateStart).ThenBy(t => t.TaskId) 
+                        )
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(r => r.RoadmapId == request.Id, cancellationToken);
+
+                //.Include(r => r.Milestones.Where(m => !m.IsDeleted))
+                //    .ThenInclude(m => m.Sections.Where(s => !s.IsDeleted))
+                //        .ThenInclude(s => s.ToDoTasks.Where(t => !t.IsDeleted))
+                //.AsSplitQuery()
+                //.FirstOrDefaultAsync(r => r.RoadmapId == request.Id, cancellationToken);
 
 
                 if (roadmap == null)
