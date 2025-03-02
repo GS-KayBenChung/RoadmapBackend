@@ -31,25 +31,6 @@ public class ExceptionMiddleware
         context.Response.ContentType = "application/json";
         var traceId = context.TraceIdentifier;
 
-        //if (exception is ValidationException validationException)
-        //{
-        //    context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-        //    var errors = validationException.Errors
-        //        .GroupBy(e => "Validation")
-        //        .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-
-        //    Log.Warning("[{TraceId}] Validation failed: {Errors}", traceId, string.Join(", ", errors["Validation"]));
-
-        //    var response = new
-        //    {
-        //        message = "Validation failed",
-        //        errors
-        //    };
-
-        //    await context.Response.WriteAsync(JsonSerializer.Serialize(response));
-        //    return;
-        //}
-
         if (exception is ValidationException validationException)
         {
             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
